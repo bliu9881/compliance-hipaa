@@ -80,6 +80,7 @@ export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promi
       4. Weak authentication/authorization.
       5. Hardcoded API keys or secrets.
       6. Missing audit trails.
+      7. Exposed password or keys
       
       Code Snippet:
       \`\`\`
