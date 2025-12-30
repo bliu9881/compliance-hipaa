@@ -168,11 +168,16 @@ const getRepoFiles = async (owner: string, repo: string) => {
 };
 
 export const performGitHubScan = async (repoUrl: string, isIncremental: boolean): Promise<ScanResult> => {
+  console.log("🚀 Starting GitHub scan for:", repoUrl);
+  
   const repoInfo = parseGitHubUrl(repoUrl);
   if (!repoInfo) throw new Error('Invalid GitHub URL');
 
   const { owner, repo } = repoInfo;
+  console.log("📂 Repository info:", { owner, repo });
+  
   const currentHash = await getLatestCommitSha(owner, repo);
+  console.log("🔗 Latest commit hash:", currentHash);
 
   if (isIncremental) {
     const { data: lastScan } = await supabase
@@ -185,6 +190,7 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean)
       .maybeSingle();
 
     if (lastScan?.last_commit_hash === currentHash) {
+      console.log("♻️ Using cached scan result - no changes detected");
       return {
         id: lastScan.id,
         timestamp: new Date(lastScan.timestamp).getTime(),
@@ -199,14 +205,23 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean)
   }
 
   const filesToScan = await getRepoFiles(owner, repo);
+  console.log("📁 Files to scan:", filesToScan.length, filesToScan.map(f => f.name));
+  
   let allFindings: Finding[] = [];
 
   for (const file of filesToScan) {
+    console.log("🔍 Analyzing file:", file.name);
     const contentResponse = await fetch(file.download_url);
     const code = await contentResponse.text();
+    console.log("📄 File content length:", code.length);
+    
     const findings = await analyzeCodeForHIPAA(code, file.name);
+    console.log("🎯 Findings for", file.name, ":", findings.length);
+    
     allFindings = [...allFindings, ...findings];
   }
+
+  console.log("📊 Total findings across all files:", allFindings.length);
 
   const result: ScanResult = {
     id: Date.now().toString(),
@@ -219,6 +234,7 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean)
     lastCommitHash: currentHash
   };
 
+  console.log("💾 Saving scan result:", result.summary);
   await saveScan(result);
   return result;
 };

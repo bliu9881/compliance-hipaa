@@ -53,6 +53,10 @@ export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promi
   // Use process.env.API_KEY directly as per guidelines
   const apiKey = process.env.API_KEY;
 
+  console.log("🔍 Starting HIPAA analysis for:", fileName);
+  console.log("🔑 API Key present:", !!apiKey);
+  console.log("📝 Code length:", code.length);
+
   if (!apiKey) {
     console.error("Gemini Scan Error: API_KEY is missing in environment variables.");
     return [{
@@ -68,10 +72,11 @@ export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promi
 
   try {
     const ai = new GoogleGenAI({ apiKey });
+    console.log("🤖 GoogleGenAI client created successfully");
     
-    // Using 'gemini-3-pro-preview' as this is a complex reasoning task (code auditing).
+    // Using 'gemini-1.5-pro' instead of 'gemini-3-pro-preview' which might not exist
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: "gemini-1.5-pro",
       contents: `Perform a HIPAA compliance audit on the following code snippet from file "${fileName}". 
       Look for:
       1. Exposure of Protected Health Information (PHI).
@@ -81,6 +86,8 @@ export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promi
       5. Hardcoded API keys or secrets.
       6. Missing audit trails.
       7. Exposed password or keys
+      
+      Return a JSON array of findings. Each finding should have: title, severity (CRITICAL/HIGH/MEDIUM/LOW), category, description, recommendation, codeExample.
       
       Code Snippet:
       \`\`\`
@@ -92,16 +99,39 @@ export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promi
       },
     });
 
+    console.log("📡 Received response from Gemini");
     const text = response.text;
+    console.log("📄 Response text length:", text?.length || 0);
+    console.log("📄 Response text preview:", text?.substring(0, 200));
+    
     if (!text) throw new Error("Empty response from Gemini");
 
     const findings = JSON.parse(text.trim());
-    return findings.map((f: any) => ({
+    console.log("✅ Parsed findings:", findings.length, "items");
+    
+    const processedFindings = findings.map((f: any) => ({
       ...f,
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 9), // Fixed deprecated substr
     }));
+    
+    console.log("🎯 Returning", processedFindings.length, "findings");
+    return processedFindings;
   } catch (error) {
-    console.error("Gemini Scan Error:", error);
-    return [];
+    console.error("❌ Gemini Scan Error:", error);
+    console.error("❌ Error details:", {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Return a test finding to verify the pipeline works
+    return [{
+      id: 'test-finding',
+      title: 'Test Finding - API Error',
+      severity: Severity.HIGH,
+      category: 'API Error',
+      description: `Failed to analyze ${fileName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      recommendation: 'Check console logs for detailed error information',
+      codeExample: '// Error occurred during analysis'
+    }];
   }
 };
