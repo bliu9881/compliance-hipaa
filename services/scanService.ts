@@ -59,7 +59,8 @@ export const getScans = async (): Promise<ScanResult[]> => {
     return local;
   }
 
-  const remote = data.map(item => ({
+  // Explicitly type as ScanResult[] to prevent inferred property requirement issues
+  const remote: ScanResult[] = data.map(item => ({
     id: item.id,
     timestamp: new Date(item.timestamp).getTime(),
     source: item.source,
@@ -67,7 +68,7 @@ export const getScans = async (): Promise<ScanResult[]> => {
     status: item.status as ScanStatus,
     summary: item.summary,
     findings: item.findings,
-    lastCommitHash: item.last_commit_hash
+    lastCommitHash: item.last_commit_hash || undefined
   }));
 
   // Merge and deduplicate (Remote data is the source of truth)

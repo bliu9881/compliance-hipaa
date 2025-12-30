@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 /**
  * Environment variables for Supabase.
- * Use process.env directly which is standard in React environments.
+ * Use process.env to safely access variables.
  */
 const supabaseUrl = process.env.SUPABASE_URL || 'https://oqbxfxrwscxukaxuewwp.supabase.co';
 const supabaseKey = process.env.SUPABASE_ANON_KEY || 'sb_publishable_IBlnvPMxWcR-774a998uvQ_I69ovn3f'; 

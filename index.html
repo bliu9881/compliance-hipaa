@@ -35,23 +35,22 @@
     </style>
     <script>
         // SHIM: Define process.env for the browser environment
-        // This prevents "ReferenceError: process is not defined"
-        window.process = {
-            env: {
-                // These are fallbacks. Production values are injected by the host.
-                NODE_ENV: 'production',
-                API_KEY: '',
-                SUPABASE_URL: '',
-                SUPABASE_ANON_KEY: ''
-            }
+        // This must be defined before any modules load
+        window.process = window.process || {};
+        window.process.env = window.process.env || {
+            NODE_ENV: 'production',
+            API_KEY: '',
+            SUPABASE_URL: '',
+            SUPABASE_ANON_KEY: ''
         };
 
         // Catch global errors to show a helpful message instead of a blank screen
         window.onerror = function(message, source, lineno, colno, error) {
+            console.error('Global Application Error:', message, error);
             const display = document.getElementById('error-display');
             if (display) {
                 display.style.display = 'block';
-                display.textContent = 'Critical App Error:\n' + message + '\n\nSource: ' + source + ':' + lineno;
+                display.textContent = 'Critical App Error:\n' + message + '\n\nSource: ' + (source || 'unknown') + ':' + (lineno || '0');
             }
             return false;
         };
@@ -72,5 +71,7 @@
 <body class="text-slate-900">
     <div id="error-display"></div>
     <div id="root"></div>
+    <!-- Load the application entry point -->
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>

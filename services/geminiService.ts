@@ -4,7 +4,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Finding, Severity } from "../types";
 
 // Schema for structured JSON output from Gemini.
-// We specify propertyOrdering and types to ensure consistent results.
 const HIPAA_SCHEMA = {
   type: Type.ARRAY,
   items: {
@@ -51,8 +50,10 @@ const HIPAA_SCHEMA = {
  * Analyzes code for HIPAA compliance issues using Gemini AI.
  */
 export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promise<Finding[]> => {
-  // Use process.env.API_KEY directly as it is guaranteed to be available in the environment.
-  if (!process.env.API_KEY) {
+  // Use process.env.API_KEY directly as per guidelines
+  const apiKey = process.env.API_KEY;
+
+  if (!apiKey) {
     console.error("Gemini Scan Error: API_KEY is missing in environment variables.");
     return [{
       id: 'err-no-key',
@@ -66,8 +67,7 @@ export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promi
   }
 
   try {
-    // Always initialize a new GoogleGenAI client with named apiKey parameter as per guidelines.
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
     
     // Using 'gemini-3-pro-preview' as this is a complex reasoning task (code auditing).
     const response = await ai.models.generateContent({
@@ -91,7 +91,6 @@ export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promi
       },
     });
 
-    // Access the text property directly from the response.
     const text = response.text;
     if (!text) throw new Error("Empty response from Gemini");
 
