@@ -12,7 +12,8 @@ import {
   Copy,
   ChevronDown,
   ChevronUp,
-  Loader2
+  Loader2,
+  XCircle
 } from 'lucide-react';
 import { getScanById } from '../services/scanService';
 import { Severity, Finding, ScanResult } from '../types';
@@ -120,6 +121,7 @@ const FindingCard: React.FC<{ finding: Finding }> = ({ finding }) => {
 export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
   const [scan, setScan] = useState<ScanResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<Severity | null>(null);
 
   useEffect(() => {
     if (scanId) {
@@ -140,9 +142,20 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
     );
   }
 
-  if (!scan) return <div className="text-center py-20">Report not found.</div>;
+  if (!scan) return <div className="text-center py-20 font-bold text-slate-400">Report not found.</div>;
+
+  const filteredFindings = filter 
+    ? scan.findings.filter(f => f.severity === filter)
+    : scan.findings;
 
   const total = scan.findings.length;
+
+  const severityConfigs = [
+    { key: Severity.CRITICAL, label: 'Critical', color: 'text-red-600', activeBg: 'bg-red-50', count: scan.summary.critical },
+    { key: Severity.HIGH, label: 'High', color: 'text-orange-500', activeBg: 'bg-orange-50', count: scan.summary.high },
+    { key: Severity.MEDIUM, label: 'Medium', color: 'text-amber-500', activeBg: 'bg-amber-50', count: scan.summary.medium },
+    { key: Severity.LOW, label: 'Low', color: 'text-blue-500', activeBg: 'bg-blue-50', count: scan.summary.low },
+  ];
 
   return (
     <div className="max-w-6xl mx-auto pb-20">
@@ -179,38 +192,63 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-4 py-6 border-y border-slate-100">
-              <div className="text-center">
-                <p className="text-2xl font-black text-red-600">{scan.summary.critical}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Critical</p>
-              </div>
-              <div className="text-center border-l border-slate-100">
-                <p className="text-2xl font-black text-orange-500">{scan.summary.high}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">High</p>
-              </div>
-              <div className="text-center border-l border-slate-100">
-                <p className="text-2xl font-black text-amber-500">{scan.summary.medium}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Medium</p>
-              </div>
-              <div className="text-center border-l border-slate-100">
-                <p className="text-2xl font-black text-blue-500">{scan.summary.low}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Low</p>
-              </div>
+            <div className="grid grid-cols-4 gap-0 py-2 border-y border-slate-100">
+              {severityConfigs.map((cfg, idx) => (
+                <button
+                  key={cfg.key}
+                  onClick={() => setFilter(filter === cfg.key ? null : cfg.key)}
+                  className={`py-4 text-center transition-all hover:bg-slate-50 outline-none ${idx > 0 ? 'border-l border-slate-100' : ''} ${filter === cfg.key ? cfg.activeBg : ''}`}
+                >
+                  <p className={`text-2xl font-black ${cfg.color}`}>{cfg.count}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{cfg.label}</p>
+                  {filter === cfg.key && (
+                    <div className="mt-1 flex justify-center">
+                      <div className={`h-1 w-8 rounded-full ${cfg.color.replace('text', 'bg')}`} />
+                    </div>
+                  )}
+                </button>
+              ))}
             </div>
 
             <div className="mt-8 space-y-4">
-              <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
-                Analysis Results ({total} findings)
-              </h3>
-              {scan.findings.length > 0 ? (
-                scan.findings.map(finding => (
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                  Analysis Results ({filteredFindings.length} {filter ? `filtered` : `total`} findings)
+                </h3>
+                {filter && (
+                  <button 
+                    onClick={() => setFilter(null)}
+                    className="text-xs font-bold text-emerald-600 flex items-center gap-1 hover:underline"
+                  >
+                    <XCircle className="w-3.5 h-3.5" /> Clear Filter
+                  </button>
+                )}
+              </div>
+              
+              {filteredFindings.length > 0 ? (
+                filteredFindings.map(finding => (
                   <FindingCard key={finding.id} finding={finding} />
                 ))
               ) : (
                 <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-xl">
-                  <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-                  <h4 className="font-bold text-slate-900">Clean Scan</h4>
-                  <p className="text-sm text-slate-500">No HIPAA compliance issues were detected.</p>
+                  {filter ? (
+                    <>
+                      <Info className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                      <h4 className="font-bold text-slate-400">No {filter} issues</h4>
+                      <button 
+                        onClick={() => setFilter(null)}
+                        className="text-sm text-emerald-600 mt-2 hover:underline font-bold"
+                      >
+                        Show all results
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
+                      <h4 className="font-bold text-slate-900">Clean Scan</h4>
+                      <p className="text-sm text-slate-500">No HIPAA compliance issues were detected.</p>
+                    </>
+                  )}
                 </div>
               )}
             </div>

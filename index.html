@@ -17,7 +17,45 @@
         .mono {
             font-family: 'JetBrains+Mono', monospace;
         }
+        #error-display {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #b91c1c;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 9999;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
     </style>
+    <script>
+        // SHIM: Define process.env for the browser environment
+        // This prevents "ReferenceError: process is not defined"
+        window.process = {
+            env: {
+                // These are fallbacks. Production values are injected by the host.
+                NODE_ENV: 'production',
+                API_KEY: '',
+                SUPABASE_URL: '',
+                SUPABASE_ANON_KEY: ''
+            }
+        };
+
+        // Catch global errors to show a helpful message instead of a blank screen
+        window.onerror = function(message, source, lineno, colno, error) {
+            const display = document.getElementById('error-display');
+            if (display) {
+                display.style.display = 'block';
+                display.textContent = 'Critical App Error:\n' + message + '\n\nSource: ' + source + ':' + lineno;
+            }
+            return false;
+        };
+    </script>
 <script type="importmap">
 {
   "imports": {
@@ -32,6 +70,7 @@
 </script>
 </head>
 <body class="text-slate-900">
+    <div id="error-display"></div>
     <div id="root"></div>
 </body>
 </html>
