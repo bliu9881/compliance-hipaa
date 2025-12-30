@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthState } from '../types';
-import { supabase } from './supabase';
+import { User, AuthState } from '../types.ts';
+import { supabase } from './supabase.ts';
 
 interface AuthContextType extends AuthState {
   login: (email: string, pass: string) => Promise<void>;
@@ -17,7 +16,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active sessions and subscribe to auth changes
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
