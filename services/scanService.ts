@@ -1,40 +1,65 @@
-import { ScanResult, ScanStatus, Finding, Severity } from '../types.ts';
-import { analyzeCodeForHIPAA } from './geminiService.ts';
-import { supabase } from './supabase.ts';
+
+import { ScanResult, ScanStatus, Finding, Severity } from '../types';
+import { analyzeCodeForHIPAA } from './geminiService';
+import { supabase } from './supabase';
 
 const LOCAL_STORAGE_KEY = 'guardphi_scans';
 
+/**
+ * Saves a scan result to Supabase with LocalStorage fallback
+ */
 export const saveScan = async (scan: ScanResult) => {
   const { data: { user } } = await supabase.auth.getUser();
+  
+  // Always save to local storage first as a buffer
   const localScans = getScansLocal();
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([scan, ...localScans.filter(s => s.id !== scan.id)]));
 
-  if (user) {
-    await supabase.from('scans').upsert({
-      id: scan.id,
-      user_id: user.id,
-      timestamp: new Date(scan.timestamp).toISOString(),
-      source: scan.source,
-      source_name: scan.sourceName,
-      status: scan.status,
-      summary: scan.summary,
-      findings: scan.findings,
-      last_commit_hash: scan.lastCommitHash
-    });
+  if (!user) {
+    console.warn('Scan saved locally only: No authenticated user found.');
+    return;
+  }
+
+  console.log('Attempting to sync scan to Supabase...', scan.id);
+
+  const { error } = await supabase.from('scans').upsert({
+    id: scan.id,
+    user_id: user.id,
+    timestamp: new Date(scan.timestamp).toISOString(),
+    source: scan.source,
+    source_name: scan.sourceName,
+    status: scan.status,
+    summary: scan.summary,
+    findings: scan.findings,
+    last_commit_hash: scan.lastCommitHash
+  });
+
+  if (error) {
+    console.error('Supabase Sync Error:', error.message);
+    console.error('Details:', error.details);
+    console.error('Hint:', 'Ensure the "scans" table exists and RLS policies allow INSERT.');
+  } else {
+    console.log('Successfully synced scan to Supabase.');
   }
 };
 
-const getScansLocal = (): ScanResult[] => {
-  const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-  return data ? JSON.parse(data) : [];
-};
-
+/**
+ * Retrieves scans for the current user (Combined Supabase + LocalStorage)
+ */
 export const getScans = async (): Promise<ScanResult[]> => {
   const local = getScansLocal();
-  const { data, error } = await supabase.from('scans').select('*').order('timestamp', { ascending: false });
+  
+  const { data, error } = await supabase
+    .from('scans')
+    .select('*')
+    .order('timestamp', { ascending: false });
 
-  if (error) return local;
+  if (error) {
+    console.warn('Supabase fetch failed (returning local history):', error.message);
+    return local;
+  }
 
+  // Explicitly type as ScanResult[] to prevent inferred property requirement issues
   const remote: ScanResult[] = data.map(item => ({
     id: item.id,
     timestamp: new Date(item.timestamp).getTime(),
@@ -43,74 +68,126 @@ export const getScans = async (): Promise<ScanResult[]> => {
     status: item.status as ScanStatus,
     summary: item.summary,
     findings: item.findings,
-    lastCommitHash: item.last_commit_hash
+    lastCommitHash: item.last_commit_hash || undefined
   }));
 
+  // Merge and deduplicate (Remote data is the source of truth)
   const combined = [...remote];
   local.forEach(l => {
-    if (!combined.find(r => r.id === l.id)) combined.push(l);
+    if (!combined.find(r => r.id === l.id)) {
+      combined.push(l);
+    }
   });
 
   return combined.sort((a, b) => b.timestamp - a.timestamp);
 };
 
+const getScansLocal = (): ScanResult[] => {
+  const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+  return data ? JSON.parse(data) : [];
+};
+
+/**
+ * Enhanced lookup checking both cloud and local storage
+ */
 export const getScanById = async (id: string): Promise<ScanResult | undefined> => {
-  const { data } = await supabase.from('scans').select('*').eq('id', id).maybeSingle();
-  if (data) return {
-    id: data.id,
-    timestamp: new Date(data.timestamp).getTime(),
-    source: data.source,
-    sourceName: data.source_name,
-    status: data.status as ScanStatus,
-    summary: data.summary,
-    findings: data.findings,
-    lastCommitHash: data.last_commit_hash
-  };
+  // 1. Try Supabase first
+  const { data, error } = await supabase
+    .from('scans')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (!error && data) {
+    return {
+      id: data.id,
+      timestamp: new Date(data.timestamp).getTime(),
+      source: data.source,
+      sourceName: data.source_name,
+      status: data.status as ScanStatus,
+      summary: data.summary,
+      findings: data.findings,
+      lastCommitHash: data.last_commit_hash
+    };
+  }
+
+  // 2. Fallback to LocalStorage
   return getScansLocal().find(s => s.id === id);
 };
 
 export const clearScans = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   localStorage.removeItem(LOCAL_STORAGE_KEY);
-  if (user) await supabase.from('scans').delete().eq('user_id', user.id);
+  
+  if (user) {
+    await supabase.from('scans').delete().eq('user_id', user.id);
+  }
 };
 
 const getSummary = (findings: Finding[]) => {
   return findings.reduce((acc, f) => {
     const key = f.severity.toLowerCase() as keyof typeof acc;
-    if (acc.hasOwnProperty(key)) acc[key]++;
+    if (acc.hasOwnProperty(key)) {
+      acc[key]++;
+    }
     return acc;
   }, { critical: 0, high: 0, medium: 0, low: 0 });
 };
 
 const parseGitHubUrl = (url: string) => {
   try {
-    const parts = url.replace(/\/$/, '').split('/');
+    const cleanUrl = url.replace(/\/$/, '');
+    const parts = cleanUrl.split('/');
     const repo = parts.pop();
     const owner = parts.pop();
-    return owner && repo ? { owner, repo } : null;
-  } catch { return null; }
+    if (!owner || !repo) return null;
+    return { owner, repo };
+  } catch (e) {
+    return null;
+  }
 };
 
 const getLatestCommitSha = async (owner: string, repo: string) => {
   const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/HEAD`);
-  if (!response.ok) throw new Error('Repository not found or private');
+  if (!response.ok) throw new Error('Failed to fetch commit info. Is the repo public?');
   const data = await response.json();
   return data.sha;
+};
+
+const getRepoFiles = async (owner: string, repo: string) => {
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
+  if (!response.ok) throw new Error('Failed to fetch repository contents');
+  const contents = await response.json();
+  
+  const codeFiles = contents.filter((file: any) => 
+    file.type === 'file' && 
+    /\.(js|ts|tsx|jsx|py|go|java|php|rb|sql)$/i.test(file.name)
+  );
+  
+  return codeFiles.slice(0, 5); 
 };
 
 export const performGitHubScan = async (repoUrl: string, isIncremental: boolean): Promise<ScanResult> => {
   const repoInfo = parseGitHubUrl(repoUrl);
   if (!repoInfo) throw new Error('Invalid GitHub URL');
+
   const { owner, repo } = repoInfo;
   const currentHash = await getLatestCommitSha(owner, repo);
 
   if (isIncremental) {
-    const { data: lastScan } = await supabase.from('scans').select('*').eq('source_name', repoUrl).order('timestamp', { ascending: false }).limit(1).maybeSingle();
+    const { data: lastScan } = await supabase
+      .from('scans')
+      .select('id, last_commit_hash, findings, summary, source_name, source, timestamp')
+      .eq('source_name', repoUrl)
+      .eq('source', 'github')
+      .order('timestamp', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     if (lastScan?.last_commit_hash === currentHash) {
       return {
         id: lastScan.id,
-        timestamp: Date.now(),
+        timestamp: new Date(lastScan.timestamp).getTime(),
         source: 'github',
         sourceName: repoUrl,
         status: ScanStatus.COMPLETED,
@@ -121,14 +198,14 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean)
     }
   }
 
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
-  const contents = await response.json();
-  const codeFiles = contents.filter((f: any) => f.type === 'file' && /\.(js|ts|tsx|jsx|py|go|java|php|rb|sql)$/i.test(f.name)).slice(0, 10);
-  
+  const filesToScan = await getRepoFiles(owner, repo);
   let allFindings: Finding[] = [];
-  for (const file of codeFiles) {
-    const code = await (await fetch(file.download_url)).text();
-    allFindings = [...allFindings, ...await analyzeCodeForHIPAA(code, file.name)];
+
+  for (const file of filesToScan) {
+    const contentResponse = await fetch(file.download_url);
+    const code = await contentResponse.text();
+    const findings = await analyzeCodeForHIPAA(code, file.name);
+    allFindings = [...allFindings, ...findings];
   }
 
   const result: ScanResult = {
@@ -148,9 +225,11 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean)
 
 export const performFileUploadScan = async (files: File[]): Promise<ScanResult> => {
   let allFindings: Finding[] = [];
+  
   for (const file of files) {
-    const code = await file.text();
-    allFindings = [...allFindings, ...await analyzeCodeForHIPAA(code, file.name)];
+    const text = await file.text();
+    const findings = await analyzeCodeForHIPAA(text, file.name);
+    allFindings = [...allFindings, ...findings];
   }
 
   const result: ScanResult = {

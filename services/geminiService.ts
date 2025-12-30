@@ -1,6 +1,9 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { Finding, Severity } from "../types.ts";
 
+// Service for performing HIPAA compliance analysis using @google/genai
+import { GoogleGenAI, Type } from "@google/genai";
+import { Finding, Severity } from "../types";
+
+// Schema for structured JSON output from Gemini.
 const HIPAA_SCHEMA = {
   type: Type.ARRAY,
   items: {
@@ -32,31 +35,33 @@ const HIPAA_SCHEMA = {
       },
       file: { 
         type: Type.STRING, 
-        description: "File path where issue was found" 
+        description: "File path where issue was found (if provided)" 
       },
       line: { 
         type: Type.INTEGER, 
         description: "Approximate line number" 
       },
     },
-    propertyOrdering: ["title", "severity", "category", "description", "recommendation", "codeExample", "file", "line"],
-    required: ["title", "severity", "category", "description", "recommendation", "codeExample"]
+    propertyOrdering: ["title", "severity", "category", "description", "recommendation", "codeExample", "file", "line"]
   }
 };
 
+/**
+ * Analyzes code for HIPAA compliance issues using Gemini AI.
+ */
 export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promise<Finding[]> => {
-  // Use process.env.API_KEY directly as required by guidelines
+  // Use process.env.API_KEY directly as per guidelines
   const apiKey = process.env.API_KEY;
 
   if (!apiKey) {
-    console.error("Gemini Scan Error: API_KEY is missing.");
+    console.error("Gemini Scan Error: API_KEY is missing in environment variables.");
     return [{
       id: 'err-no-key',
       title: 'Configuration Error',
       severity: Severity.CRITICAL,
       category: 'System',
       description: 'The Gemini API Key is missing. The AI analysis cannot proceed.',
-      recommendation: 'Check that the API_KEY environment variable is correctly set in your execution environment.',
+      recommendation: 'Please ensure the API_KEY environment variable is configured in the environment settings.',
       codeExample: '// API_KEY required'
     }];
   }
@@ -64,12 +69,19 @@ export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promi
   try {
     const ai = new GoogleGenAI({ apiKey });
     
-    // Complex reasoning tasks like code auditing require Gemini 3 Pro
+    // Using 'gemini-3-pro-preview' as this is a complex reasoning task (code auditing).
     const response = await ai.models.generateContent({
       model: "gemini-3-pro-preview",
-      contents: `Audit this code snippet from "${fileName}" for HIPAA compliance issues (PHI leaks, encryption, access control, audit logs).
+      contents: `Perform a HIPAA compliance audit on the following code snippet from file "${fileName}". 
+      Look for:
+      1. Exposure of Protected Health Information (PHI).
+      2. Lack of encryption (transit or rest).
+      3. Insecure logging (logging PHI).
+      4. Weak authentication/authorization.
+      5. Hardcoded API keys or secrets.
+      6. Missing audit trails.
       
-      Code:
+      Code Snippet:
       \`\`\`
       ${code}
       \`\`\``,
@@ -79,7 +91,6 @@ export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promi
       },
     });
 
-    // Directly access .text property
     const text = response.text;
     if (!text) throw new Error("Empty response from Gemini");
 

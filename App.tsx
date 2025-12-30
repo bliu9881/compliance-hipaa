@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { AuthProvider, useAuth } from './services/AuthContext.tsx';
-import { Sidebar } from './components/Sidebar.tsx';
-import { Header } from './components/Header.tsx';
-import { Login } from './components/Login.tsx';
-import { Dashboard } from './components/Dashboard.tsx';
-import { Scanner } from './components/Scanner.tsx';
-import { Report } from './components/Report.tsx';
-import { History } from './components/History.tsx';
+
+import React, { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './services/AuthContext';
+import { Sidebar } from './components/Sidebar';
+import { Header } from './components/Header';
+import { Login } from './components/Login';
+import { Dashboard } from './components/Dashboard';
+import { Scanner } from './components/Scanner';
+import { Report } from './components/Report';
+import { History } from './components/History';
 import { Loader2 } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
