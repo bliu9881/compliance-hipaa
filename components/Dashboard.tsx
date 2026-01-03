@@ -34,6 +34,71 @@ export const Dashboard: React.FC<DashboardProps> = ({ onStartScan, onViewReport 
 
   const totalFindings = scans.reduce((acc, s) => acc + s.findings.length, 0);
   const criticalFindings = scans.reduce((acc, s) => acc + s.summary.critical, 0);
+  const highFindings = scans.reduce((acc, s) => acc + s.summary.high, 0);
+  const mediumFindings = scans.reduce((acc, s) => acc + s.summary.medium, 0);
+  const lowFindings = scans.reduce((acc, s) => acc + s.summary.low, 0);
+
+  // Calculate real HIPAA Readiness Score based on LATEST scan
+  const calculateReadinessScore = (): number => {
+    if (scans.length === 0) return 0;
+
+    // Get the most recent scan
+    const latestScan = scans[0]; // scans are already sorted by timestamp desc
+    
+    if (!latestScan || latestScan.findings.length === 0) return 100;
+
+    const { critical, high, medium, low } = latestScan.summary;
+    const totalFindings = critical + high + medium + low;
+    const filesScanned = latestScan.filesScanned || 1;
+    
+    // Weight findings by severity for scoring
+    const weightedFindings = (critical * 4) + (high * 3) + (medium * 2) + (low * 1);
+    
+    // Calculate findings density per file
+    const findingsPerFile = weightedFindings / filesScanned;
+    
+    // Score calculation: Start at 100%, deduct based on findings
+    let score = 100;
+    
+    // Deduct points based on findings density (more findings = lower score)
+    score -= Math.min(findingsPerFile * 8, 60); // Max 60% deduction from findings density
+    
+    // Additional deductions for critical issues (they have severe impact)
+    if (critical > 0) {
+      score -= Math.min(critical * 8, 25); // Up to 25% deduction for critical issues
+    }
+    
+    // Additional deductions for high severity issues
+    if (high > 0) {
+      score -= Math.min(high * 3, 15); // Up to 15% deduction for high issues
+    }
+    
+    // Ensure score is between 0 and 100
+    return Math.max(0, Math.min(100, Math.round(score)));
+  };
+
+  const readinessScore = calculateReadinessScore();
+  const latestScan = scans.length > 0 ? scans[0] : null;
+  
+  // Determine readiness message based on score and latest scan
+  const getReadinessMessage = (score: number): string => {
+    if (!latestScan) return "Run your first audit to calculate readiness score";
+    
+    const scanDate = new Date(latestScan.timestamp).toLocaleDateString();
+    
+    if (score >= 90) return `Excellent compliance (Last scan: ${scanDate})`;
+    if (score >= 75) return `Good compliance with room for improvement (${scanDate})`;
+    if (score >= 60) return `Moderate compliance - action needed (${scanDate})`;
+    if (score >= 40) return `Poor compliance - immediate attention required (${scanDate})`;
+    return `Critical compliance issues - urgent action required (${scanDate})`;
+  };
+
+  const getScoreColor = (score: number): string => {
+    if (score >= 75) return "text-emerald-400";
+    if (score >= 60) return "text-yellow-400";
+    if (score >= 40) return "text-orange-400";
+    return "text-red-400";
+  };
 
   const stats = [
     { label: 'Total Scans', value: scans.length, icon: Clock, color: 'blue' },
@@ -149,19 +214,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ onStartScan, onViewReport 
                     strokeWidth="8"
                     fill="transparent"
                     strokeDasharray={364}
-                    strokeDashoffset={364 * (1 - 0.75)}
-                    className="text-emerald-400"
+                    strokeDashoffset={364 * (1 - readinessScore / 100)}
+                    className={getScoreColor(readinessScore)}
                     strokeLinecap="round"
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-bold">75%</span>
+                  <span className={`text-3xl font-bold ${getScoreColor(readinessScore)}`}>
+                    {readinessScore}%
+                  </span>
                 </div>
               </div>
-              <p className="text-sm text-slate-400 mt-4 text-center">Your infrastructure is 75% compliant with current standards.</p>
+              <p className="text-sm text-slate-400 mt-4 text-center">
+                {getReadinessMessage(readinessScore)}
+              </p>
+              {latestScan && (
+                <div className="mt-3 text-xs text-slate-500 text-center">
+                  Latest scan: {latestScan.sourceName} • {latestScan.findings.length} finding{latestScan.findings.length !== 1 ? 's' : ''}
+                  {latestScan.summary.critical > 0 && (
+                    <span className="ml-2 text-red-400 font-semibold">
+                      • {latestScan.summary.critical} critical
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
-            <button className="w-full mt-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-bold transition-colors">
-              Improve Score
+            <button 
+              onClick={onStartScan}
+              className="w-full mt-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-bold transition-colors"
+            >
+              {readinessScore < 75 ? 'Improve Score' : 'Maintain Compliance'}
             </button>
           </div>
 
