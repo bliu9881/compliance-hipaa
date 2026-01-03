@@ -23,6 +23,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanStage, setScanStage] = useState('');
   const [error, setError] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleGitHubScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,8 +54,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+  const handleFileUpload = async (files: File[]) => {
     if (files.length === 0) return;
 
     setIsScanning(true);
@@ -63,12 +63,57 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
 
     try {
       const result = await performFileUploadScan(files);
-      setScanStage('Analyzing code with Gemini AI...');
+      setScanStage('Analyzing code with AI...');
       onScanComplete(result.id);
     } catch (err) {
       setError('Failed to scan files.');
       setIsScanning(false);
     }
+  };
+
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    await handleFileUpload(files);
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    if (isScanning) return;
+
+    const files = Array.from(e.dataTransfer.files);
+    
+    // Filter for code files
+    const codeFiles = files.filter(file => {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      return ['js', 'ts', 'tsx', 'jsx', 'py', 'go', 'java', 'php', 'rb', 'sql', 'c', 'cpp', 'cs', 'swift', 'kt', 'scala', 'rs'].includes(extension || '');
+    });
+
+    if (codeFiles.length === 0) {
+      setError('No supported code files found. Please upload JS, TS, Python, Go, Java, PHP, Ruby, SQL, C/C++, C#, Swift, Kotlin, Scala, or Rust files.');
+      return;
+    }
+
+    await handleFileUpload(codeFiles);
   };
 
   return (
@@ -163,22 +208,48 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
           ) : (
             <div className="space-y-6">
               <div 
-                className={`border-2 border-dashed border-slate-200 rounded-2xl p-12 text-center transition-all ${isScanning ? 'opacity-50' : 'hover:border-emerald-400 hover:bg-emerald-50'}`}
-                onDragOver={(e) => e.preventDefault()}
+                className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all ${
+                  isScanning 
+                    ? 'opacity-50 border-slate-200' 
+                    : isDragOver 
+                      ? 'border-emerald-500 bg-emerald-50 scale-105' 
+                      : 'border-slate-200 hover:border-emerald-400 hover:bg-emerald-50'
+                }`}
+                onDragEnter={handleDragEnter}
+                onDragLeave={handleDragLeave}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
               >
-                <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                  <Upload className="w-8 h-8 text-slate-400" />
+                <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-all ${
+                  isDragOver ? 'bg-emerald-100 scale-110' : 'bg-slate-100'
+                }`}>
+                  <Upload className={`w-8 h-8 transition-all ${
+                    isDragOver ? 'text-emerald-600' : 'text-slate-400'
+                  }`} />
                 </div>
-                <h4 className="text-lg font-bold text-slate-900">Drag & drop files or folders</h4>
-                <p className="text-sm text-slate-500 mt-2 mb-6">Support for JS, TS, Python, Go, and SQL files</p>
-                <label className="cursor-pointer bg-white border border-slate-200 px-6 py-2.5 rounded-lg font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                <h4 className={`text-lg font-bold transition-all ${
+                  isDragOver ? 'text-emerald-900' : 'text-slate-900'
+                }`}>
+                  {isDragOver ? 'Drop files here!' : 'Drag & drop files or folders'}
+                </h4>
+                <p className={`text-sm mt-2 mb-6 transition-all ${
+                  isDragOver ? 'text-emerald-700' : 'text-slate-500'
+                }`}>
+                  Support for JS, TS, Python, Go, Java, PHP, Ruby, SQL, C/C++, C#, Swift, Kotlin, Scala, and Rust files
+                </p>
+                <label className={`cursor-pointer border px-6 py-2.5 rounded-lg font-bold transition-all shadow-sm ${
+                  isDragOver 
+                    ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700' 
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                }`}>
                   Browse Files
                   <input 
                     type="file" 
                     multiple 
                     className="hidden" 
-                    onChange={handleFileUpload}
+                    onChange={handleFileInputChange}
                     disabled={isScanning}
+                    accept=".js,.ts,.tsx,.jsx,.py,.go,.java,.php,.rb,.sql,.c,.cpp,.cs,.swift,.kt,.scala,.rs"
                   />
                 </label>
               </div>
