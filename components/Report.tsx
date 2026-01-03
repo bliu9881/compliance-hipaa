@@ -148,6 +148,7 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
   const [scan, setScan] = useState<ScanResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Severity | null>(null);
+  const [fileFilter, setFileFilter] = useState<string | null>(null);
 
   useEffect(() => {
     if (scanId) {
@@ -170,9 +171,16 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
 
   if (!scan) return <div className="text-center py-20 font-bold text-slate-400">Report not found.</div>;
 
-  const filteredFindings = filter 
-    ? scan.findings.filter(f => f.severity === filter)
-    : scan.findings;
+  // Apply both severity and file filters
+  let filteredFindings = scan.findings;
+  
+  if (filter) {
+    filteredFindings = filteredFindings.filter(f => f.severity === filter);
+  }
+  
+  if (fileFilter) {
+    filteredFindings = filteredFindings.filter(f => f.file === fileFilter);
+  }
 
   const total = scan.findings.length;
 
@@ -247,12 +255,25 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
                     {Array.from(new Set(filteredFindings.filter(f => f.file).map(f => f.file))).map(file => {
                       const fileFindings = filteredFindings.filter(f => f.file === file);
                       const lines = fileFindings.map(f => f.line).filter(Boolean).sort((a, b) => a! - b!);
+                      const isSelected = fileFilter === file;
                       return (
-                        <div key={file} className="bg-white rounded-lg p-3 border border-amber-200">
-                          <div className="font-mono text-sm font-semibold text-slate-900 mb-1">
+                        <button
+                          key={file}
+                          onClick={() => setFileFilter(isSelected ? null : file)}
+                          className={`bg-white rounded-lg p-3 border transition-all text-left hover:shadow-md ${
+                            isSelected 
+                              ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50' 
+                              : 'border-amber-200 hover:border-amber-300'
+                          }`}
+                        >
+                          <div className={`font-mono text-sm font-semibold mb-1 ${
+                            isSelected ? 'text-emerald-900' : 'text-slate-900'
+                          }`}>
                             📁 {file}
                           </div>
-                          <div className="text-xs text-slate-600">
+                          <div className={`text-xs ${
+                            isSelected ? 'text-emerald-700' : 'text-slate-600'
+                          }`}>
                             {fileFindings.length} violation{fileFindings.length > 1 ? 's' : ''}
                             {lines.length > 0 && (
                               <span className="ml-2">
@@ -260,7 +281,12 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
                               </span>
                             )}
                           </div>
-                        </div>
+                          {isSelected && (
+                            <div className="mt-2 text-xs font-bold text-emerald-600">
+                              ✓ Click to show all violations
+                            </div>
+                          )}
+                        </button>
                       );
                     })}
                   </div>
@@ -269,15 +295,43 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
 
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                  Analysis Results ({filteredFindings.length} {filter ? `filtered` : `total`} findings)
+                  Analysis Results ({filteredFindings.length} {filter || fileFilter ? `filtered` : `total`} findings)
+                  {fileFilter && (
+                    <span className="text-sm font-normal text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
+                      📁 {fileFilter}
+                    </span>
+                  )}
                 </h3>
-                {filter && (
-                  <button 
-                    onClick={() => setFilter(null)}
-                    className="text-xs font-bold text-emerald-600 flex items-center gap-1 hover:underline"
-                  >
-                    <XCircle className="w-3.5 h-3.5" /> Clear Filter
-                  </button>
+                {(filter || fileFilter) && (
+                  <div className="flex items-center gap-2">
+                    {filter && (
+                      <button 
+                        onClick={() => setFilter(null)}
+                        className="text-xs font-bold text-orange-600 flex items-center gap-1 hover:underline"
+                      >
+                        <XCircle className="w-3.5 h-3.5" /> Clear Severity
+                      </button>
+                    )}
+                    {fileFilter && (
+                      <button 
+                        onClick={() => setFileFilter(null)}
+                        className="text-xs font-bold text-emerald-600 flex items-center gap-1 hover:underline"
+                      >
+                        <XCircle className="w-3.5 h-3.5" /> Clear File
+                      </button>
+                    )}
+                    {(filter || fileFilter) && (
+                      <button 
+                        onClick={() => {
+                          setFilter(null);
+                          setFileFilter(null);
+                        }}
+                        className="text-xs font-bold text-slate-600 flex items-center gap-1 hover:underline"
+                      >
+                        <XCircle className="w-3.5 h-3.5" /> Clear All
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
               
@@ -287,12 +341,17 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
                 ))
               ) : (
                 <div className="text-center py-12 border-2 border-dashed border-slate-100 rounded-xl">
-                  {filter ? (
+                  {filter || fileFilter ? (
                     <>
                       <Info className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                      <h4 className="font-bold text-slate-400">No {filter} issues</h4>
+                      <h4 className="font-bold text-slate-400">
+                        No {filter ? filter : ''} issues {fileFilter ? `in ${fileFilter}` : ''}
+                      </h4>
                       <button 
-                        onClick={() => setFilter(null)}
+                        onClick={() => {
+                          setFilter(null);
+                          setFileFilter(null);
+                        }}
                         className="text-sm text-emerald-600 mt-2 hover:underline font-bold"
                       >
                         Show all results
