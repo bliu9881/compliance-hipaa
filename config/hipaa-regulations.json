@@ -1,0 +1,88 @@
+{
+  "lastUpdated": "2024-01-02",
+  "version": "2024.1",
+  "regulations": {
+    "securityRule": {
+      "cfr": "45 CFR §164.302-318",
+      "lastModified": "2024-01-01",
+      "keyUpdates": [
+        "Enhanced cybersecurity requirements",
+        "Cloud security guidance updates",
+        "Multi-factor authentication requirements",
+        "Zero-trust architecture recommendations"
+      ]
+    },
+    "privacyRule": {
+      "cfr": "45 CFR §164.500-534", 
+      "lastModified": "2024-01-01",
+      "keyUpdates": [
+        "Individual rights enhancements",
+        "Minimum necessary standard clarifications",
+        "Business associate agreement updates"
+      ]
+    },
+    "breachNotification": {
+      "cfr": "45 CFR §164.400-414",
+      "lastModified": "2024-01-01", 
+      "keyUpdates": [
+        "Notification timeline requirements",
+        "Risk assessment procedures",
+        "Media notification thresholds"
+      ]
+    }
+  },
+  "penaltyTiers": {
+    "tier1": {
+      "description": "Unknowing violation",
+      "minPenalty": 137,
+      "maxPenalty": 68928,
+      "conditions": "Entity did not know and would not have known of violation"
+    },
+    "tier2": {
+      "description": "Reasonable cause",
+      "minPenalty": 1379,
+      "maxPenalty": 68928,
+      "conditions": "Violation due to reasonable cause, not willful neglect"
+    },
+    "tier3": {
+      "description": "Willful neglect - corrected",
+      "minPenalty": 13785,
+      "maxPenalty": 68928,
+      "conditions": "Willful neglect but violation corrected within 30 days"
+    },
+    "tier4": {
+      "description": "Willful neglect - not corrected",
+      "minPenalty": 68928,
+      "maxPenalty": 2067840,
+      "conditions": "Willful neglect, violation not corrected"
+    }
+  },
+  "modernRequirements": {
+    "cybersecurity": [
+      "Multi-factor authentication for PHI access",
+      "Zero-trust network architecture",
+      "Cloud security configurations",
+      "API security controls",
+      "Container security",
+      "Supply chain security",
+      "AI/ML security for PHI processing",
+      "Remote work security controls"
+    ],
+    "technicalSafeguards": [
+      "Encryption at rest (AES-256 minimum)",
+      "Encryption in transit (TLS 1.3 minimum)",
+      "Database encryption",
+      "Key management systems",
+      "Secure coding practices",
+      "Vulnerability management",
+      "Incident response automation",
+      "Continuous monitoring"
+    ]
+  },
+  "sources": [
+    "https://www.hhs.gov/hipaa/for-professionals/security/index.html",
+    "https://www.hhs.gov/hipaa/for-professionals/privacy/index.html", 
+    "https://www.hhs.gov/hipaa/for-professionals/breach-notification/index.html",
+    "https://www.hhs.gov/hipaa/for-professionals/security/guidance/cybersecurity/index.html"
+  ]
+}

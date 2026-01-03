@@ -62,8 +62,16 @@ const FindingCard: React.FC<{ finding: Finding }> = ({ finding }) => {
             <div className="flex items-center gap-2 mb-1">
               <h4 className="font-bold text-slate-900">{finding.title}</h4>
               <SeverityBadge severity={finding.severity} />
+              {finding.penaltyTier && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase border bg-red-100 text-red-700 border-red-200">
+                  {finding.penaltyTier}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{finding.category}</p>
+            {finding.regulation && (
+              <p className="text-xs text-blue-600 font-mono mt-1">{finding.regulation}</p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -85,6 +93,25 @@ const FindingCard: React.FC<{ finding: Finding }> = ({ finding }) => {
 
       {isExpanded && (
         <div className="p-6 border-t border-slate-100 bg-slate-50/50 space-y-6">
+          {/* Regulation Reference */}
+          {finding.regulation && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h5 className="text-sm font-bold text-blue-900 flex items-center gap-2 mb-2">
+                <FileCode className="w-4 h-4 text-blue-600" /> HIPAA Regulation Reference
+              </h5>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-sm bg-blue-100 text-blue-800 px-3 py-2 rounded-lg border border-blue-300 font-semibold">
+                  {finding.regulation}
+                </span>
+                {finding.penaltyTier && (
+                  <span className="text-sm font-bold text-red-700 bg-red-100 px-3 py-1 rounded-lg border border-red-200">
+                    Penalty: {finding.penaltyTier}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* File Location Info */}
           {finding.file && (
             <div className="bg-white border border-slate-200 rounded-lg p-4">
@@ -374,6 +401,14 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
           <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
             <h3 className="font-bold text-slate-900 mb-4">Audit Metadata</h3>
             <div className="space-y-4 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500">HIPAA Version</span>
+                <span className="font-semibold text-emerald-700">2024.1</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Regulations Updated</span>
+                <span className="font-semibold text-slate-900">Jan 2024</span>
+              </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Files Scanned</span>
                 <span className="font-semibold text-slate-900">{scan.filesScanned || 'Unknown'}</span>

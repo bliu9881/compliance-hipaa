@@ -168,11 +168,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ onStartScan, onViewReport 
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <h3 className="font-bold text-slate-900 mb-4">Quick Links</h3>
             <div className="space-y-3">
-              <a href="#" className="flex items-center gap-2 text-sm text-emerald-600 hover:underline">
+              <a 
+                href="https://www.hhs.gov/hipaa/for-professionals/security/guidance/cybersecurity/index.html" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-emerald-600 hover:underline hover:text-emerald-700 transition-colors"
+              >
                 <FileText className="w-4 h-4" /> HIPAA Technical Safeguards Guide
               </a>
-              <a href="#" className="flex items-center gap-2 text-sm text-emerald-600 hover:underline">
+              <a 
+                href="https://www.hhs.gov/hipaa/for-professionals/covered-entities/sample-business-associate-agreement-provisions/index.html" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-emerald-600 hover:underline hover:text-emerald-700 transition-colors"
+              >
                 <ShieldCheck className="w-4 h-4" /> BAA Agreement Templates
+              </a>
+              <a 
+                href="https://www.hhs.gov/hipaa/for-professionals/security/laws-regulations/index.html" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-emerald-600 hover:underline hover:text-emerald-700 transition-colors"
+              >
+                <ShieldAlert className="w-4 h-4" /> HIPAA Security Rule
+              </a>
+              <a 
+                href="https://www.hhs.gov/hipaa/for-professionals/breach-notification/index.html" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-emerald-600 hover:underline hover:text-emerald-700 transition-colors"
+              >
+                <AlertTriangle className="w-4 h-4" /> Breach Notification Rule
               </a>
             </div>
           </div>

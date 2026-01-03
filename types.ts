@@ -23,6 +23,8 @@ export interface Finding {
   line?: number;
   recommendation: string;
   codeExample: string;
+  regulation?: string; // CFR reference like "45 CFR §164.312(a)(1)"
+  penaltyTier?: string; // Penalty tier: "Tier 1", "Tier 2", "Tier 3", "Tier 4"
 }
 
 export interface ScanResult {
