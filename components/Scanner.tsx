@@ -8,7 +8,10 @@ import {
   ChevronRight, 
   Info,
   History,
-  AlertCircle
+  AlertCircle,
+  X,
+  FileCode,
+  Trash2
 } from 'lucide-react';
 import { performGitHubScan, performFileUploadScan } from '../services/scanService';
 
@@ -24,6 +27,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   const [scanStage, setScanStage] = useState('');
   const [error, setError] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const handleGitHubScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +62,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
     if (files.length === 0) return;
 
     setIsScanning(true);
-    setScanStage('Reading uploaded files...');
+    setScanStage(`Reading ${files.length} uploaded file${files.length > 1 ? 's' : ''}...`);
     setError('');
 
     try {
@@ -71,9 +75,38 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
     }
   };
 
+  const handleFileSelection = (files: File[]) => {
+    // Filter for code files
+    const codeFiles = files.filter(file => {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      return ['js', 'ts', 'tsx', 'jsx', 'py', 'go', 'java', 'php', 'rb', 'sql', 'c', 'cpp', 'cs', 'swift', 'kt', 'scala', 'rs'].includes(extension || '');
+    });
+
+    if (codeFiles.length === 0) {
+      setError('No supported code files found. Please upload JS, TS, Python, Go, Java, PHP, Ruby, SQL, C/C++, C#, Swift, Kotlin, Scala, or Rust files.');
+      return;
+    }
+
+    setSelectedFiles(codeFiles);
+    setError('');
+  };
+
   const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    await handleFileUpload(files);
+    handleFileSelection(files);
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const clearAllFiles = () => {
+    setSelectedFiles([]);
+  };
+
+  const startScan = async () => {
+    if (selectedFiles.length === 0) return;
+    await handleFileUpload(selectedFiles);
   };
 
   const handleDragEnter = (e: React.DragEvent) => {
@@ -101,19 +134,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
     if (isScanning) return;
 
     const files = Array.from(e.dataTransfer.files);
-    
-    // Filter for code files
-    const codeFiles = files.filter(file => {
-      const extension = file.name.split('.').pop()?.toLowerCase();
-      return ['js', 'ts', 'tsx', 'jsx', 'py', 'go', 'java', 'php', 'rb', 'sql', 'c', 'cpp', 'cs', 'swift', 'kt', 'scala', 'rs'].includes(extension || '');
-    });
-
-    if (codeFiles.length === 0) {
-      setError('No supported code files found. Please upload JS, TS, Python, Go, Java, PHP, Ruby, SQL, C/C++, C#, Swift, Kotlin, Scala, or Rust files.');
-      return;
-    }
-
-    await handleFileUpload(codeFiles);
+    handleFileSelection(files);
   };
 
   return (
@@ -254,7 +275,85 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
                 </label>
               </div>
 
-              {isScanning && (
+              {/* Selected Files Display */}
+              {selectedFiles.length > 0 && (
+                <div className="bg-white border border-slate-200 rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-bold text-slate-900 flex items-center gap-2">
+                      <FileCode className="w-5 h-5 text-emerald-600" />
+                      Selected Files ({selectedFiles.length})
+                    </h4>
+                    <button
+                      onClick={clearAllFiles}
+                      className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1 font-medium"
+                      disabled={isScanning}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Clear All
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {selectedFiles.map((file, index) => {
+                      const extension = file.name.split('.').pop()?.toLowerCase();
+                      const sizeKB = (file.size / 1024).toFixed(1);
+                      
+                      return (
+                        <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="flex-shrink-0">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white ${
+                                extension === 'js' || extension === 'jsx' ? 'bg-yellow-500' :
+                                extension === 'ts' || extension === 'tsx' ? 'bg-blue-500' :
+                                extension === 'py' ? 'bg-green-500' :
+                                extension === 'go' ? 'bg-cyan-500' :
+                                extension === 'java' ? 'bg-orange-500' :
+                                extension === 'php' ? 'bg-purple-500' :
+                                extension === 'rb' ? 'bg-red-500' :
+                                extension === 'sql' ? 'bg-indigo-500' :
+                                'bg-slate-500'
+                              }`}>
+                                {extension?.toUpperCase() || 'FILE'}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-slate-900 truncate">{file.name}</p>
+                              <p className="text-xs text-slate-500">{sizeKB} KB</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removeFile(index)}
+                            className="flex-shrink-0 p-1 text-slate-400 hover:text-red-600 transition-colors"
+                            disabled={isScanning}
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <button 
+                    onClick={startScan}
+                    disabled={isScanning || selectedFiles.length === 0}
+                    className="w-full mt-6 py-4 bg-emerald-600 text-white rounded-xl font-bold text-lg hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isScanning ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        {scanStage}
+                      </>
+                    ) : (
+                      <>
+                        <ScanSearch className="w-6 h-6" />
+                        Start Compliance Audit ({selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''})
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {isScanning && selectedFiles.length === 0 && (
                 <div className="flex flex-col items-center gap-4 text-emerald-600 py-4">
                   <Loader2 className="w-8 h-8 animate-spin" />
                   <p className="font-bold">{scanStage}</p>
