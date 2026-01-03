@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { getScanById } from '../services/scanService';
 import { Severity, Finding, ScanResult } from '../types';
-import { BAAGenerator } from './BAAGenerator';
 
 interface ReportProps {
   scanId: string | null;
@@ -177,7 +176,6 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Severity | null>(null);
   const [fileFilter, setFileFilter] = useState<string | null>(null);
-  const [showBAAGenerator, setShowBAAGenerator] = useState(false);
 
   useEffect(() => {
     if (scanId) {
@@ -437,25 +435,16 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
           </div>
 
           <div className="bg-emerald-600 rounded-2xl p-6 text-white shadow-lg shadow-emerald-200">
-            <h3 className="font-bold text-lg mb-2">Need a BAA?</h3>
-            <p className="text-sm text-slate-400 mt-4 text-center leading-relaxed mb-6">
-              Our automated system can help you generate a compliant Business Associate Agreement in minutes.
+            <h3 className="font-bold text-lg mb-2">HIPAA Compliance Resources</h3>
+            <p className="text-emerald-100 text-sm leading-relaxed mb-6">
+              Access additional compliance tools and resources to strengthen your HIPAA posture.
             </p>
-            <button 
-              onClick={() => setShowBAAGenerator(true)}
-              className="w-full bg-white text-emerald-700 py-2.5 rounded-lg font-bold hover:bg-emerald-50 transition-colors"
-            >
-              Generate BAA
+            <button className="w-full bg-white text-emerald-700 py-2.5 rounded-lg font-bold hover:bg-emerald-50 transition-colors">
+              View Resources
             </button>
           </div>
         </div>
       </div>
-
-      {/* BAA Generator Modal */}
-      <BAAGenerator 
-        isOpen={showBAAGenerator} 
-        onClose={() => setShowBAAGenerator(false)} 
-      />
     </div>
   );
 };

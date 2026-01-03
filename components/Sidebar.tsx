@@ -22,6 +22,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'scanner', label: 'New Scan', icon: ScanSearch },
     { id: 'history', label: 'Scan History', icon: History },
+    { id: 'baa-generator', label: 'Generate BAA', icon: FileText },
   ];
 
   return (

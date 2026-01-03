@@ -8,16 +8,25 @@ import { Dashboard } from './components/Dashboard';
 import { Scanner } from './components/Scanner';
 import { Report } from './components/Report';
 import { History } from './components/History';
+import { BAAGenerator } from './components/BAAGenerator';
 import { Loader2 } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [selectedScanId, setSelectedScanId] = useState<string | null>(null);
+  const [showBAAGenerator, setShowBAAGenerator] = useState(false);
 
   const navigateTo = (page: string, id?: string) => {
     setCurrentPage(page);
     if (id) setSelectedScanId(id);
     else setSelectedScanId(null);
+    
+    // Handle BAA generator navigation
+    if (page === 'baa-generator') {
+      setShowBAAGenerator(true);
+    } else {
+      setShowBAAGenerator(false);
+    }
   };
 
   const renderContent = () => {
@@ -30,6 +39,8 @@ const MainLayout: React.FC = () => {
         return <Report scanId={selectedScanId} onBack={() => navigateTo('history')} />;
       case 'history':
         return <History onViewReport={(id) => navigateTo('report', id)} />;
+      case 'baa-generator':
+        return <Dashboard onStartScan={() => navigateTo('scanner')} onViewReport={(id) => navigateTo('report', id)} />;
       default:
         return <Dashboard onStartScan={() => navigateTo('scanner')} onViewReport={(id) => navigateTo('report', id)} />;
     }
@@ -44,6 +55,15 @@ const MainLayout: React.FC = () => {
           {renderContent()}
         </main>
       </div>
+      
+      {/* BAA Generator Modal */}
+      <BAAGenerator 
+        isOpen={showBAAGenerator} 
+        onClose={() => {
+          setShowBAAGenerator(false);
+          setCurrentPage('dashboard');
+        }} 
+      />
     </div>
   );
 };
