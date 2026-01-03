@@ -39,6 +39,7 @@ export interface ScanResult {
     low: number;
   };
   lastCommitHash?: string;
+  filesScanned?: number; // Add file count tracking
 }
 
 export interface User {

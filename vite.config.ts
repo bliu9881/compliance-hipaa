@@ -5,10 +5,12 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     
-    // AWS credentials for Bedrock
-    const awsAccessKeyId = env.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID;
-    const awsSecretAccessKey = env.AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY;
-    const awsRegion = env.AWS_REGION || process.env.AWS_REGION || 'us-east-1';
+    // Only expose Gemini API key to client (safe for client-side use)
+    const geminiApiKey = process.env.GEMINI_API_KEY || env.GEMINI_API_KEY;
+    
+    console.log('🔧 Vite Config - Environment Variables:');
+    console.log('GEMINI_API_KEY present:', !!geminiApiKey);
+    console.log('AWS credentials will be handled server-side for security');
     
     return {
       server: {
@@ -17,13 +19,9 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        // Keep Gemini for backward compatibility
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        // Add AWS credentials for Bedrock
-        'process.env.AWS_ACCESS_KEY_ID': JSON.stringify(awsAccessKeyId),
-        'process.env.AWS_SECRET_ACCESS_KEY': JSON.stringify(awsSecretAccessKey),
-        'process.env.AWS_REGION': JSON.stringify(awsRegion)
+        // Only expose Gemini API key to client
+        'process.env.API_KEY': JSON.stringify(geminiApiKey),
+        'process.env.GEMINI_API_KEY': JSON.stringify(geminiApiKey),
       },
       resolve: {
         alias: {

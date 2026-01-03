@@ -31,7 +31,8 @@ export const saveScan = async (scan: ScanResult) => {
     status: scan.status,
     summary: scan.summary,
     findings: scan.findings,
-    last_commit_hash: scan.lastCommitHash
+    last_commit_hash: scan.lastCommitHash,
+    files_scanned: scan.filesScanned || 0 // Add files scanned count
   });
 
   if (error) {
@@ -68,7 +69,8 @@ export const getScans = async (): Promise<ScanResult[]> => {
     status: item.status as ScanStatus,
     summary: item.summary,
     findings: item.findings,
-    lastCommitHash: item.last_commit_hash || undefined
+    lastCommitHash: item.last_commit_hash || undefined,
+    filesScanned: item.files_scanned || 0 // Add files scanned count
   }));
 
   // Merge and deduplicate (Remote data is the source of truth)
@@ -107,7 +109,8 @@ export const getScanById = async (id: string): Promise<ScanResult | undefined> =
       status: data.status as ScanStatus,
       summary: data.summary,
       findings: data.findings,
-      lastCommitHash: data.last_commit_hash
+      lastCommitHash: data.last_commit_hash,
+      filesScanned: data.files_scanned || 0 // Add files scanned count
     };
   }
 
@@ -154,17 +157,46 @@ const getLatestCommitSha = async (owner: string, repo: string) => {
   return data.sha;
 };
 
-const getRepoFiles = async (owner: string, repo: string) => {
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
-  if (!response.ok) throw new Error('Failed to fetch repository contents');
+const getRepoFiles = async (owner: string, repo: string, path: string = '', maxFiles: number = 50): Promise<any[]> => {
+  console.log(`📂 Scanning directory: ${path || 'root'}`);
+  
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents${path ? `/${path}` : ''}`;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Failed to fetch repository contents for ${path || 'root'}`);
   const contents = await response.json();
   
-  const codeFiles = contents.filter((file: any) => 
-    file.type === 'file' && 
-    /\.(js|ts|tsx|jsx|py|go|java|php|rb|sql)$/i.test(file.name)
-  );
+  let allFiles: any[] = [];
   
-  return codeFiles.slice(0, 5); 
+  for (const item of contents) {
+    if (allFiles.length >= maxFiles) {
+      console.log(`⚠️ Reached maximum file limit (${maxFiles}), stopping scan`);
+      break;
+    }
+    
+    if (item.type === 'file') {
+      // Check if it's a code file we want to scan
+      if (/\.(js|ts|tsx|jsx|py|go|java|php|rb|sql|c|cpp|cs|swift|kt|scala|rs)$/i.test(item.name)) {
+        console.log(`📄 Found code file: ${item.path}`);
+        allFiles.push(item);
+      }
+    } else if (item.type === 'dir') {
+      // Skip common directories that don't contain source code
+      const skipDirs = ['node_modules', '.git', 'dist', 'build', 'target', 'bin', 'obj', '.next', 'coverage', '__pycache__'];
+      if (!skipDirs.includes(item.name)) {
+        console.log(`📁 Recursively scanning subdirectory: ${item.path}`);
+        try {
+          const subFiles = await getRepoFiles(owner, repo, item.path, maxFiles - allFiles.length);
+          allFiles = [...allFiles, ...subFiles];
+        } catch (error) {
+          console.warn(`⚠️ Failed to scan subdirectory ${item.path}:`, error);
+        }
+      } else {
+        console.log(`⏭️ Skipping directory: ${item.path}`);
+      }
+    }
+  }
+  
+  return allFiles;
 };
 
 export const performGitHubScan = async (repoUrl: string, isIncremental: boolean): Promise<ScanResult> => {
@@ -205,18 +237,19 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean)
   }
 
   const filesToScan = await getRepoFiles(owner, repo);
-  console.log("📁 Files to scan:", filesToScan.length, filesToScan.map(f => f.name));
+  console.log("📁 Total files found for scanning:", filesToScan.length);
+  console.log("📄 Files to scan:", filesToScan.map(f => f.path || f.name));
   
   let allFindings: Finding[] = [];
 
   for (const file of filesToScan) {
-    console.log("🔍 Analyzing file:", file.name);
+    console.log("🔍 Analyzing file:", file.path || file.name);
     const contentResponse = await fetch(file.download_url);
     const code = await contentResponse.text();
     console.log("📄 File content length:", code.length);
     
-    const findings = await analyzeCodeForHIPAA(code, file.name);
-    console.log("🎯 Findings for", file.name, ":", findings.length);
+    const findings = await analyzeCodeForHIPAA(code, file.path || file.name);
+    console.log("🎯 Findings for", file.path || file.name, ":", findings.length);
     
     allFindings = [...allFindings, ...findings];
   }
@@ -231,7 +264,8 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean)
     status: ScanStatus.COMPLETED,
     findings: allFindings,
     summary: getSummary(allFindings),
-    lastCommitHash: currentHash
+    lastCommitHash: currentHash,
+    filesScanned: filesToScan.length // Track number of files scanned
   };
 
   console.log("💾 Saving scan result:", result.summary);
@@ -242,9 +276,13 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean)
 export const performFileUploadScan = async (files: File[]): Promise<ScanResult> => {
   let allFindings: Finding[] = [];
   
+  console.log("📁 Total files uploaded for scanning:", files.length);
+  
   for (const file of files) {
+    console.log("🔍 Analyzing uploaded file:", file.name);
     const text = await file.text();
     const findings = await analyzeCodeForHIPAA(text, file.name);
+    console.log("🎯 Findings for", file.name, ":", findings.length);
     allFindings = [...allFindings, ...findings];
   }
 
@@ -255,7 +293,8 @@ export const performFileUploadScan = async (files: File[]): Promise<ScanResult> 
     sourceName: `${files.length} file(s)`,
     status: ScanStatus.COMPLETED,
     findings: allFindings,
-    summary: getSummary(allFindings)
+    summary: getSummary(allFindings),
+    filesScanned: files.length // Track number of files scanned
   };
 
   await saveScan(result);
