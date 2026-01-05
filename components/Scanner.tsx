@@ -93,6 +93,8 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
 
   const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    console.log("📂 File input change - files selected:", files.length);
+    console.log("📂 File names:", files.map(f => f.name));
     handleFileSelection(files);
   };
 
@@ -134,6 +136,8 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
     if (isScanning) return;
 
     const files = Array.from(e.dataTransfer.files);
+    console.log("🎯 Drag and drop - files dropped:", files.length);
+    console.log("🎯 File names:", files.map(f => f.name));
     handleFileSelection(files);
   };
 
