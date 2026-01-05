@@ -1,5 +1,4 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
-import { regulationUpdateService } from '../services/regulationUpdateService';
 
 export default async function handler(req: any, res: any) {
   // Only allow POST requests
@@ -23,94 +22,81 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: 'AWS credentials not configured' });
   }
 
-  // Check for regulation updates and get current requirements
-  const updateCheck = await regulationUpdateService.checkForUpdates();
-  const auditEnhancements = regulationUpdateService.getAuditEnhancements();
-  
-  console.log(`Using HIPAA regulations version: ${updateCheck.version} (${updateCheck.lastUpdated})`);
-  if (updateCheck.hasUpdates) {
-    console.log('New regulation updates available:', updateCheck.updateSummary);
-  }
+  const prompt = `Human: Perform a comprehensive HIPAA compliance audit on the following code snippet from file "${fileName}".
 
-  const prompt = `Human: Perform a comprehensive HIPAA compliance audit on the following code snippet from file "${fileName}" using the LATEST 2024 HIPAA regulations and industry best practices.
-
-${auditEnhancements}
-
-CRITICAL: Use the most current HIPAA requirements including:
-- HIPAA Security Rule (45 CFR §164.302-318) - Updated 2024
-- HIPAA Privacy Rule (45 CFR §164.500-534) - Updated 2024  
-- HIPAA Breach Notification Rule (45 CFR §164.400-414) - Updated 2024
-- HITECH Act requirements for enhanced penalties and breach notifications
-- OCR Guidance on Cybersecurity (2024 updates)
-- Recent OCR enforcement actions and settlement agreements
+ANALYSIS INSTRUCTIONS:
+- Examine each line of code systematically for HIPAA violations
+- Look for multiple violations per line when they exist
+- Consider both obvious security issues and subtle compliance gaps
+- Analyze code patterns, configurations, and missing security controls
+- Be thorough but focus on realistic, actionable violations
 
 IMPORTANT: For each violation found, you MUST provide:
 1. The exact file name: "${fileName}"
 2. The specific line number where the violation occurs
-3. Reference to specific HIPAA regulation (CFR section)
-4. Current penalty ranges for violations
+3. If the violation spans multiple lines, provide the starting line number
 
-Analyze for these UPDATED HIPAA violations with 2024 standards:
-
-ADMINISTRATIVE SAFEGUARDS:
-1. Missing Security Officer designation in code comments/documentation
-2. Inadequate workforce training indicators (missing security awareness)
-3. Information access management violations
-4. Security incident procedures missing
-5. Contingency plan implementation gaps
-
-PHYSICAL SAFEGUARDS:
-6. Workstation use controls missing in remote access code
-7. Device and media controls inadequate
-8. Facility access controls not implemented in cloud configurations
+Analyze for these HIPAA compliance violations:
 
 TECHNICAL SAFEGUARDS:
-9. Access control violations - inadequate unique user identification
-10. Audit controls missing - no logging of PHI access/modifications
-11. Integrity controls missing - no data integrity verification
-12. Person or entity authentication inadequate
-13. Transmission security violations - unencrypted PHI transmission
+1. Hardcoded credentials, passwords, API keys, or secrets
+2. Unencrypted data storage (databases, files, variables containing sensitive data)
+3. Unencrypted data transmission (HTTP instead of HTTPS, unencrypted connections)
+4. Missing or inadequate authentication mechanisms
+5. Missing or inadequate authorization/access controls
+6. Insufficient audit logging for data access and modifications
+7. Missing data integrity verification
+8. Insecure session management
+9. SQL injection vulnerabilities (dynamic query construction)
+10. Cross-site scripting (XSS) vulnerabilities
+11. Insecure direct object references
+12. Missing input validation and sanitization
+
+ADMINISTRATIVE SAFEGUARDS:
+13. Missing security incident response procedures
+14. Inadequate access management (overly broad permissions)
+15. Missing workforce training indicators
+16. Insufficient information system activity review
+
+PHYSICAL SAFEGUARDS:
+17. Inadequate workstation and device controls
+18. Missing facility access controls in cloud configurations
 
 PRIVACY RULE VIOLATIONS:
-14. Minimum necessary standard violations
-15. Individual rights violations (access, amendment, accounting)
-16. Notice of privacy practices missing
-17. Business associate agreement requirements not met
+19. Potential exposure of Protected Health Information (PHI)
+20. Violations of minimum necessary standard
+21. Missing individual rights implementations
+22. Inadequate business associate agreement requirements
 
-BREACH NOTIFICATION VIOLATIONS:
-18. Missing breach detection mechanisms
-19. Inadequate breach assessment procedures
-20. Missing notification timelines implementation
-
-MODERN CYBERSECURITY REQUIREMENTS (2024):
-21. Multi-factor authentication missing for PHI access
-22. Zero-trust architecture principles not implemented
-23. Cloud security misconfigurations
-24. API security vulnerabilities
-25. Container/microservices security gaps
-26. Supply chain security issues
-27. AI/ML model security for PHI processing
-28. Remote work security controls missing
+INFRASTRUCTURE & CLOUD SECURITY:
+23. Public accessibility where it should be private
+24. Overly permissive security groups or firewall rules
+25. Missing encryption at rest configurations
+26. Inadequate backup and disaster recovery procedures
+27. Missing compliance monitoring and alerting
+28. Insecure network configurations
+29. Missing multi-factor authentication requirements
+30. Inadequate data retention and disposal policies
 
 Return your findings as a JSON array. Each finding MUST have exactly these fields:
 - title: string (concise violation title)
 - severity: string (exactly one of: "CRITICAL", "HIGH", "MEDIUM", "LOW")
-- category: string (specific HIPAA category like "Technical Safeguards - Access Control", "Privacy Rule - Minimum Necessary", "Administrative Safeguards - Security Officer")
-- description: string (detailed explanation referencing specific CFR section)
-- recommendation: string (specific actionable fix with 2024 best practices)
-- codeExample: string (secure code snippet following current standards)
+- category: string (HIPAA category like "Technical Safeguards", "Privacy Rule", "Administrative Safeguards")
+- description: string (detailed explanation of the violation and its HIPAA implications)
+- recommendation: string (specific actionable fix)
+- codeExample: string (secure code snippet to resolve the issue)
 - file: string (MUST be "${fileName}")
 - line: number (specific line number where violation occurs - count from 1)
-- regulation: string (specific CFR reference like "45 CFR §164.312(a)(1)")
-- penaltyTier: string (applicable penalty tier: "Tier 1", "Tier 2", "Tier 3", or "Tier 4")
 
 Code to analyze (with line numbers):
 \`\`\`
 ${code.split('\n').map((line: string, index: number) => `${index + 1}: ${line}`).join('\n')}
 \`\`\`
 
-Return only the JSON array, no other text. ENSURE every finding includes the file name "${fileName}", specific line number, CFR regulation reference, and penalty tier.
-Assistant: I'll analyze this code for HIPAA compliance violations using the latest 2024 regulations and return my findings as a JSON array.`;
+Be thorough and systematic in your analysis. Look for both obvious violations and subtle security gaps that could impact HIPAA compliance.
+
+Return only the JSON array, no other text. ENSURE every finding includes the file name "${fileName}" and a specific line number.
+Assistant: I'll analyze this code for HIPAA compliance violations and return my findings as a JSON array.`;
 
   try {
     const client = new BedrockRuntimeClient({
@@ -137,7 +123,7 @@ Assistant: I'll analyze this code for HIPAA compliance violations using the late
           accept: "application/json",
           body: JSON.stringify({
             anthropic_version: "bedrock-2023-05-31",
-            max_tokens: 4000,
+            max_tokens: 6000,
             temperature: 0.1,
             messages: [
               {
@@ -183,21 +169,10 @@ Assistant: I'll analyze this code for HIPAA compliance violations using the late
   } catch (error: any) {
     console.error("Bedrock API Error:", error);
     
-    // Return mock data for testing
-    const mockFindings = [
-      {
-        id: 'mock-1',
-        title: 'API Error - Using Mock Data',
-        severity: 'HIGH',
-        category: 'System',
-        description: `Analysis failed for ${fileName}: ${error.message}`,
-        recommendation: 'Check server logs and AWS configuration.',
-        codeExample: '// Mock finding due to API error',
-        file: fileName,
-        line: 1
-      }
-    ];
-    
-    return res.status(200).json({ findings: mockFindings });
+    // Return error instead of mock data
+    return res.status(500).json({ 
+      error: `Analysis failed: ${error.message}`,
+      details: 'Check server logs for more information'
+    });
   }
 }
