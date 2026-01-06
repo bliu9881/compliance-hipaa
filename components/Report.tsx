@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
   Download, 
-  Share2, 
   AlertTriangle, 
   ShieldAlert, 
   Info, 
@@ -17,7 +16,6 @@ import {
 } from 'lucide-react';
 import { getScanById } from '../services/scanService';
 import { Severity, Finding, ScanResult } from '../types';
-import { ShareModal } from './ShareModal';
 import { ExportModal } from './ExportModal';
 
 interface ReportProps {
@@ -178,7 +176,6 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Severity | null>(null);
   const [fileFilter, setFileFilter] = useState<string | null>(null);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
 
   useEffect(() => {
@@ -233,12 +230,6 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
           Back to Audit Logs
         </button>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setShowShareModal(true)}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-white shadow-sm transition-all"
-          >
-            <Share2 className="w-4 h-4" /> Share
-          </button>
           <button 
             onClick={() => setShowExportModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-bold hover:bg-slate-800 shadow-lg shadow-slate-200 transition-all"
@@ -458,18 +449,11 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
 
       {/* Modals */}
       {scan && (
-        <>
-          <ShareModal 
-            isOpen={showShareModal}
-            onClose={() => setShowShareModal(false)}
-            scan={scan}
-          />
-          <ExportModal 
-            isOpen={showExportModal}
-            onClose={() => setShowExportModal(false)}
-            scan={scan}
-          />
-        </>
+        <ExportModal 
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          scan={scan}
+        />
       )}
     </div>
   );
