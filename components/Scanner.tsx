@@ -114,27 +114,35 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log("🎯 Drag enter");
     setIsDragOver(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log("🎯 Drag leave");
     setIsDragOver(false);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log("🎯 Drag over");
   };
 
   const handleDrop = async (e: React.DragEvent) => {
+    console.log("🎯 Drop event triggered");
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
 
-    if (isScanning) return;
+    if (isScanning) {
+      console.log("🎯 Scanning in progress, ignoring drop");
+      return;
+    }
 
+    console.log("🎯 Processing dropped files...");
     const files = Array.from(e.dataTransfer.files);
     console.log("🎯 Drag and drop - files dropped:", files.length);
     console.log("🎯 File names:", files.map(f => f.name));
