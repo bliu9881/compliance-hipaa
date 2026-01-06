@@ -143,8 +143,33 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
     }
 
     console.log("🎯 Processing dropped files...");
+    console.log("🎯 DataTransfer object:", e.dataTransfer);
+    console.log("🎯 DataTransfer.files:", e.dataTransfer.files);
+    console.log("🎯 DataTransfer.files.length:", e.dataTransfer.files.length);
+    console.log("🎯 DataTransfer.items:", e.dataTransfer.items);
+    console.log("🎯 DataTransfer.types:", e.dataTransfer.types);
+
     const files = Array.from(e.dataTransfer.files);
     console.log("🎯 Drag and drop - files dropped:", files.length);
+    
+    if (files.length === 0) {
+      console.log("🎯 No files in dataTransfer.files, trying items...");
+      
+      // Try using dataTransfer.items as fallback
+      const items = Array.from(e.dataTransfer.items);
+      const fileItems = items.filter(item => item.kind === 'file');
+      console.log("🎯 File items found:", fileItems.length);
+      
+      const filesFromItems = fileItems.map(item => item.getAsFile()).filter(file => file !== null);
+      console.log("🎯 Files from items:", filesFromItems.length);
+      
+      if (filesFromItems.length > 0) {
+        console.log("🎯 Using files from items");
+        handleFileSelection(filesFromItems as File[]);
+        return;
+      }
+    }
+    
     console.log("🎯 File names:", files.map(f => f.name));
     handleFileSelection(files);
   };
