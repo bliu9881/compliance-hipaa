@@ -11,9 +11,12 @@ import {
   AlertCircle,
   X,
   FileCode,
-  Trash2
+  Trash2,
+  Shield
 } from 'lucide-react';
 import { performGitHubScan, performFileUploadScan } from '../services/scanService';
+import { SecurityGuarantee } from './SecurityGuarantee';
+import { SecurityBadge } from './SecurityBadge';
 
 interface ScannerProps {
   onScanComplete: (id: string) => void;
@@ -28,6 +31,8 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   const [error, setError] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'github' | 'upload' | null>(null);
 
   const handleGitHubScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +41,12 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
       return;
     }
     
+    // Show security guarantee modal first
+    setPendingAction('github');
+    setShowSecurityModal(true);
+  };
+
+  const proceedWithGitHubScan = async () => {
     setIsScanning(true);
     setScanStage('Connecting to GitHub API...');
     setError('');
@@ -49,7 +60,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
         setScanStage('No changes detected since last scan.');
         setTimeout(() => onScanComplete(result.id), 1000);
       } else {
-        setScanStage('Analyzing code with Gemini AI...');
+        setScanStage('Analyzing code with AI...');
         onScanComplete(result.id);
       }
     } catch (err: any) {
@@ -73,6 +84,35 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
       setError('Failed to scan files.');
       setIsScanning(false);
     }
+  };
+
+  const startScan = async () => {
+    if (selectedFiles.length === 0) return;
+    
+    // Show security guarantee modal first
+    setPendingAction('upload');
+    setShowSecurityModal(true);
+  };
+
+  const proceedWithFileUpload = async () => {
+    await handleFileUpload(selectedFiles);
+  };
+
+  const handleSecurityAccept = () => {
+    setShowSecurityModal(false);
+    
+    if (pendingAction === 'github') {
+      proceedWithGitHubScan();
+    } else if (pendingAction === 'upload') {
+      proceedWithFileUpload();
+    }
+    
+    setPendingAction(null);
+  };
+
+  const handleSecurityCancel = () => {
+    setShowSecurityModal(false);
+    setPendingAction(null);
   };
 
   const handleFileSelection = (files: File[]) => {
@@ -108,7 +148,10 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
 
   const startScan = async () => {
     if (selectedFiles.length === 0) return;
-    await handleFileUpload(selectedFiles);
+    
+    // Show security guarantee modal first
+    setPendingAction('upload');
+    setShowSecurityModal(true);
   };
 
   const handleDragEnter = (e: React.DragEvent) => {
@@ -401,7 +444,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
         </div>
 
         <div className="bg-slate-50 px-8 py-6 border-t border-slate-200">
-          <div className="flex items-start gap-4">
+          <div className="flex items-start gap-4 mb-4">
             <Info className="w-5 h-5 text-blue-500 mt-0.5" />
             <div className="text-sm text-slate-600 leading-relaxed">
               <p className="font-bold text-slate-900 mb-1">Our HIPAA scanner checks for:</p>
@@ -413,8 +456,38 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
               </ul>
             </div>
           </div>
+          
+          {/* Security Badge */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-blue-100 text-blue-600 rounded-lg flex-shrink-0">
+                <Info className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-blue-900 mb-1">Development Tool Notice</h4>
+                <p className="text-sm text-blue-800 leading-relaxed mb-3">
+                  This scanner uses HTTPS and AWS AI services for analysis. We store compliance findings, 
+                  not source code. Remove secrets before scanning.
+                </p>
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="text-xs font-bold text-blue-700 hover:text-blue-800 underline flex items-center gap-1"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                  View Details & Best Practices
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Security Guarantee Modal */}
+      <SecurityGuarantee
+        isOpen={showSecurityModal}
+        onClose={handleSecurityCancel}
+        onAccept={handleSecurityAccept}
+      />
     </div>
   );
 };
