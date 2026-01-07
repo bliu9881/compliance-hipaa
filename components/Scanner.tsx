@@ -146,14 +146,6 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
     setSelectedFiles([]);
   };
 
-  const startScan = async () => {
-    if (selectedFiles.length === 0) return;
-    
-    // Show security guarantee modal first
-    setPendingAction('upload');
-    setShowSecurityModal(true);
-  };
-
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
