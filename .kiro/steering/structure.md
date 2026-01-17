@@ -4,7 +4,7 @@
 
 - `App.tsx`: Main application component with routing logic
 - `index.tsx`: Application entry point
-- `types.ts`: Global TypeScript type definitions
+- `types.ts`: Global TypeScript type definitions (Severity, ScanStatus, Finding, ScanResult, User, AuthState)
 - `infrastructure.ts`: Infrastructure/deployment configuration
 - `metadata.json`: Application metadata and permissions
 
@@ -13,7 +13,7 @@
 ### `/components`
 React UI components following single responsibility principle:
 - `Dashboard.tsx`: Main dashboard view
-- `Scanner.tsx`: Code scanning interface
+- `Scanner.tsx`: Code scanning interface with GitHub and file upload modes
 - `Report.tsx`: Scan results display
 - `History.tsx`: Scan history management
 - `BAAGenerator.tsx`: Business Associate Agreement generator
@@ -25,7 +25,7 @@ React UI components following single responsibility principle:
 ### `/services`
 Business logic and external integrations:
 - `AuthContext.tsx`: Authentication state management
-- `scanService.ts`: Core scanning orchestration
+- `scanService.ts`: Core scanning orchestration (GitHub and file upload)
 - `bedrockService.ts`: AWS Bedrock AI integration
 - `geminiService.ts`: Google Gemini AI integration
 - `claudeService.ts`: Claude AI integration
@@ -37,7 +37,7 @@ Business logic and external integrations:
 
 ### `/api`
 Server-side API endpoints:
-- `analyze.ts`: Secure code analysis endpoint
+- `analyze.ts`: Secure code analysis endpoint using AWS Bedrock
 
 ### `/config`
 Configuration files:
@@ -70,3 +70,4 @@ Configuration files:
 - Client-side API keys only for safe services (Gemini)
 - AWS credentials handled server-side only
 - Supabase RLS policies for data isolation
+- Code analysis performed server-side via Bedrock API

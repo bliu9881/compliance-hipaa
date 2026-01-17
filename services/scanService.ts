@@ -1,6 +1,6 @@
 
-import { ScanResult, ScanStatus, Finding, Severity } from '../types';
-import { analyzeCodeForHIPAA } from './bedrockService'; // Changed to use Bedrock
+import { ScanResult, ScanStatus, Finding } from '../types';
+import { analyzeCodeForHIPAA } from './aiProviderService';
 import { supabase } from './supabase';
 
 const LOCAL_STORAGE_KEY = 'guardphi_scans';

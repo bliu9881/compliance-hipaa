@@ -8,9 +8,11 @@
 - **Icons**: Lucide React for consistent iconography
 - **Authentication**: Supabase Auth
 - **Database**: Supabase (PostgreSQL)
-- **AI Services**: 
-  - AWS Bedrock (Claude models via `@aws-sdk/client-bedrock-runtime`)
-  - Google Gemini (`@google/genai`)
+- **AI Services**:
+  - AWS Bedrock (Claude 3.5 Sonnet) - Server-side, default provider
+  - Google Gemini 3 - Client-side provider
+  - Configurable per user via Sidebar settings (authenticated users only)
+  - Preferences stored in Supabase with localStorage fallback
 
 ## Development Environment
 
@@ -55,4 +57,3 @@ Required environment variables in `.env.local`:
 - Strict TypeScript configuration with experimental decorators
 - Path aliases using `@/*` for clean imports
 - ESLint and type checking via IDE integration
-- Missing React types should be installed: `npm i --save-dev @types/react`
