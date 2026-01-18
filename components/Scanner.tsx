@@ -212,8 +212,8 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   return (
     <div className="max-w-4xl mx-auto py-8">
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Compliance Audit</h1>
-        <p className="text-slate-500 mt-2">Choose an asset source to start your HIPAA audit scan.</p>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">AI-Powered Compliance Audit</h1>
+        <p className="text-slate-500 mt-2">Choose an asset source to start your HIPAA audit scan with advanced AI analysis.</p>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">

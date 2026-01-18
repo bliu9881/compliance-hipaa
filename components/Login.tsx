@@ -53,7 +53,7 @@ export const Login: React.FC = () => {
             <h1 className="text-4xl font-black tracking-tight">AuroScan</h1>
           </div>
           <div className="space-y-4">
-            <h2 className="text-5xl font-bold leading-tight">Advanced HIPAA Compliance Sentinel.</h2>
+            <h2 className="text-5xl font-bold leading-tight">Advanced HIPAA Compliance Sentinel powered by AI.</h2>
             <p className="text-emerald-100 text-xl font-medium leading-relaxed">
               Secure your health infrastructure with AI-driven audits, incremental checks, and actionable remediation guides.
             </p>
