@@ -71,3 +71,8 @@ Configuration files:
 - AWS credentials handled server-side only
 - Supabase RLS policies for data isolation
 - Code analysis performed server-side via Bedrock API
+
+## Local Storage Keys
+
+- `guardphi_scans`: Scan history cache
+- `guardphi_ai_provider`: Selected AI provider preference

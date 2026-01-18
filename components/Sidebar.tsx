@@ -33,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
       <div className="w-64 h-full bg-slate-900 text-white flex flex-col">
         <div className="p-6 flex items-center gap-3">
           <ShieldCheck className="text-emerald-400 w-8 h-8" />
-          <span className="font-bold text-xl tracking-tight">GuardPHI</span>
+          <span className="font-bold text-xl tracking-tight">AuroScan</span>
         </div>
         
         <nav className="flex-1 px-4 mt-6">

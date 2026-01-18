@@ -1,6 +1,6 @@
-# GuardPHI - HIPAA Compliance Sentinel
+# AuroScan - HIPAA Compliance Sentinel
 
-GuardPHI is a professional-grade HIPAA compliance auditing tool designed for healthcare applications. The platform provides automated security scanning and compliance verification for codebases handling Protected Health Information (PHI).
+AuroScan is a professional-grade HIPAA compliance auditing tool designed for healthcare applications. The platform provides automated security scanning and compliance verification for codebases handling Protected Health Information (PHI).
 
 ## Core Features
 
