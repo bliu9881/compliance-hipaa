@@ -329,7 +329,7 @@ By: _________________________    Date: _____________
 Name: 
 Title: 
 
-Generated on ${new Date().toLocaleDateString()} by GuardPHI HIPAA Compliance System
+Generated on ${new Date().toLocaleDateString()} by AuroScan HIPAA Compliance System
 This document is a template and should be reviewed by legal counsel before execution.`;
 
     return header + body + footer;
@@ -342,14 +342,14 @@ This document is a template and should be reviewed by legal counsel before execu
     // In a real implementation, save to database
     const savedBAAs = this.getSavedBAAs();
     savedBAAs.push(baa);
-    localStorage.setItem('guardphi_baas', JSON.stringify(savedBAAs));
+    localStorage.setItem('auroscan_baas', JSON.stringify(savedBAAs));
   }
 
   /**
    * Get saved BAAs
    */
   public getSavedBAAs(): GeneratedBAA[] {
-    const saved = localStorage.getItem('guardphi_baas');
+    const saved = localStorage.getItem('auroscan_baas');
     return saved ? JSON.parse(saved) : [];
   }
 

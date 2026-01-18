@@ -50,7 +50,7 @@ export const Login: React.FC = () => {
             <div className="w-16 h-16 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/30">
               <ShieldCheck className="w-10 h-10" />
             </div>
-            <h1 className="text-4xl font-black tracking-tight">GuardPHI</h1>
+            <h1 className="text-4xl font-black tracking-tight">AuroScan</h1>
           </div>
           <div className="space-y-4">
             <h2 className="text-5xl font-bold leading-tight">Advanced HIPAA Compliance Sentinel.</h2>
@@ -76,7 +76,7 @@ export const Login: React.FC = () => {
         <div className="w-full max-w-md space-y-10">
           <div className="lg:hidden flex items-center gap-3 mb-8">
             <ShieldCheck className="text-emerald-600 w-8 h-8" />
-            <span className="font-bold text-2xl text-slate-900 tracking-tight">GuardPHI</span>
+            <span className="font-bold text-2xl text-slate-900 tracking-tight">AuroScan</span>
           </div>
 
           <div>

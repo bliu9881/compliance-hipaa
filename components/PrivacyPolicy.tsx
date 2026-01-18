@@ -49,7 +49,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
             <h2 className="text-2xl font-bold text-slate-900 mb-4">Overview</h2>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
               <p className="text-slate-700 leading-relaxed">
-                <strong>GuardPHI HIPAA Scanner</strong> is a development tool that analyzes code for HIPAA compliance issues. 
+                <strong>AuroScan HIPAA Scanner</strong> is a development tool that analyzes code for HIPAA compliance issues. 
                 We use HTTPS encryption and AWS AI services for analysis. While we don't intentionally store source code, 
                 this tool is designed for development and testing purposes, not production security guarantees.
               </p>
@@ -326,7 +326,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
                 <div>
                   <h3 className="font-bold text-blue-900 mb-3">Contact Options</h3>
                   <ul className="space-y-2 text-sm text-blue-800">
-                    <li>• Email: privacy@guardphi.com</li>
+                    <li>• Email: privacy@auroscan.com</li>
                     <li>• Data Protection Officer available</li>
                     <li>• 24-hour response commitment</li>
                     <li>• Secure deletion within 48 hours</li>

@@ -6,7 +6,7 @@ import { supabase } from './supabase';
 export type AIProvider = 'bedrock' | 'gemini';
 
 const DEFAULT_PROVIDER: AIProvider = 'bedrock';
-const STORAGE_KEY = 'guardphi_ai_provider';
+const STORAGE_KEY = 'auroscan_ai_provider';
 
 /**
  * Get the currently selected AI provider from Supabase or localStorage fallback

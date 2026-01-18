@@ -9,7 +9,7 @@ const supabaseUrl = process.env.SUPABASE_URL || 'https://oqbxfxrwscxukaxuewwp.su
 const supabaseKey = process.env.SUPABASE_ANON_KEY || 'sb_publishable_IBlnvPMxWcR-774a998uvQ_I69ovn3f'; 
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error("GuardPHI Error: Supabase configuration is missing. Authentication will fail.");
+  console.error("AuroScan Error: Supabase configuration is missing. Authentication will fail.");
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey);

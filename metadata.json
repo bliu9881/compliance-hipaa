@@ -1,5 +1,5 @@
 {
-  "name": "GuardPHI - HIPAA Compliance Sentinel",
+  "name": "AuroScan - HIPAA Compliance Sentinel",
   "description": "A professional-grade HIPAA compliance auditing tool for health applications. Supports GitHub repository analysis with incremental checks, local file uploads, and AI-powered fix recommendations with actionable code examples.",
   "requestFramePermissions": []
 }

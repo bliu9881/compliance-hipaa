@@ -3,7 +3,7 @@ import { ScanResult, ScanStatus, Finding } from '../types';
 import { analyzeCodeForHIPAA } from './aiProviderService';
 import { supabase } from './supabase';
 
-const LOCAL_STORAGE_KEY = 'guardphi_scans';
+const LOCAL_STORAGE_KEY = 'auroscan_scans';
 
 /**
  * Saves a scan result to Supabase with LocalStorage fallback

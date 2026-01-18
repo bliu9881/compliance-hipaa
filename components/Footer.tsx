@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
                 <Shield className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900">GuardPHI</h3>
+                <h3 className="font-bold text-slate-900">AuroScan</h3>
                 <p className="text-sm text-slate-600">HIPAA Compliance Scanner</p>
               </div>
             </div>
@@ -70,15 +70,15 @@ export const Footer: React.FC = () => {
             <h4 className="font-bold text-slate-900 mb-4">Support</h4>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>
-                <a href="mailto:support@guardphi.com" className="hover:text-emerald-600 transition-colors flex items-center gap-1">
+                <a href="mailto:support@auroscan.com" className="hover:text-emerald-600 transition-colors flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5" />
-                  support@guardphi.com
+                  support@auroscan.com
                 </a>
               </li>
               <li>
-                <a href="mailto:privacy@guardphi.com" className="hover:text-emerald-600 transition-colors flex items-center gap-1">
+                <a href="mailto:privacy@auroscan.com" className="hover:text-emerald-600 transition-colors flex items-center gap-1">
                   <Mail className="w-3.5 h-3.5" />
-                  privacy@guardphi.com
+                  privacy@auroscan.com
                 </a>
               </li>
               <li>
@@ -99,7 +99,7 @@ export const Footer: React.FC = () => {
 
         <div className="border-t border-slate-200 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-slate-500">
-            © 2024 GuardPHI. All rights reserved. Built with security and privacy by design.
+            © 2024 AuroScan. All rights reserved. Built with security and privacy by design.
           </p>
           <div className="flex items-center gap-4 text-xs text-slate-500">
             <span>🔒 SOC 2 Compliant</span>

@@ -424,7 +424,7 @@ export const Report: React.FC<ReportProps> = ({ scanId, onBack }) => {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Engine Version</span>
-                <span className="font-semibold text-slate-900">GuardPHI v2.5 (AI)</span>
+                <span className="font-semibold text-slate-900">AuroScan v2.5 (AI)</span>
               </div>
               {scan.lastCommitHash && (
                 <div className="flex justify-between">
