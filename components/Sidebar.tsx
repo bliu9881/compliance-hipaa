@@ -7,7 +7,9 @@ import {
   ShieldCheck, 
   FileText,
   LogOut,
-  Settings
+  Settings,
+  X,
+  Menu
 } from 'lucide-react';
 import { useAuth } from '../services/AuthContext';
 import { AIProviderSettings } from './AIProviderSettings';
@@ -15,9 +17,11 @@ import { AIProviderSettings } from './AIProviderSettings';
 interface SidebarProps {
   activePage: string;
   onNavigate: (page: string) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isOpen = true, onClose }) => {
   const { logout } = useAuth();
   const [showAISettings, setShowAISettings] = useState(false);
 
@@ -28,9 +32,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
     { id: 'baa-generator', label: 'Generate BAA', icon: FileText },
   ];
 
+  const handleNavigate = (page: string) => {
+    onNavigate(page);
+    if (onClose) onClose();
+  };
+
   return (
     <>
-      <div className="w-64 h-full bg-slate-900 text-white flex flex-col">
+      <div className={`fixed md:static w-64 h-full bg-slate-900 text-white flex flex-col z-40 transition-transform duration-300 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      }`}>
         <div className="p-6 flex items-center gap-3">
           <ShieldCheck className="text-emerald-400 w-8 h-8" />
           <span className="font-bold text-xl tracking-tight">AuroScan</span>
@@ -41,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate }) => {
             {menuItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => onNavigate(item.id)}
+                onClick={() => handleNavigate(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   activePage === item.id 
                   ? 'bg-emerald-600 text-white' 

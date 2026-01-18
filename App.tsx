@@ -16,13 +16,14 @@ const MainLayout: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [selectedScanId, setSelectedScanId] = useState<string | null>(null);
   const [showBAAGenerator, setShowBAAGenerator] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navigateTo = (page: string, id?: string) => {
     setCurrentPage(page);
     if (id) setSelectedScanId(id);
     else setSelectedScanId(null);
+    setSidebarOpen(false);
     
-    // Handle BAA generator navigation
     if (page === 'baa-generator') {
       setShowBAAGenerator(true);
     } else {
@@ -49,9 +50,26 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-50">
-      <Sidebar activePage={currentPage} onNavigate={navigateTo} />
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 md:hidden z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
+      <Sidebar 
+        activePage={currentPage} 
+        onNavigate={navigateTo}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+      
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
+        <Header 
+          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+          menuOpen={sidebarOpen}
+        />
         <main className="flex-1 overflow-y-auto">
           <div className="p-4 md:p-8">
             {renderContent()}
