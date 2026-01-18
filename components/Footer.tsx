@@ -76,12 +76,6 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
-                <a href="mailto:privacy@auroscan.com" className="hover:text-emerald-600 transition-colors flex items-center gap-1">
-                  <Mail className="w-3.5 h-3.5" />
-                  privacy@auroscan.com
-                </a>
-              </li>
-              <li>
                 <a href="#" className="hover:text-emerald-600 transition-colors flex items-center gap-1">
                   <FileText className="w-3.5 h-3.5" />
                   Documentation
