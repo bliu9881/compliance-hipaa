@@ -109,23 +109,7 @@ export const Footer: React.FC = () => {
   return (
     <footer className="bg-slate-50 border-t border-slate-200 py-12 px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-8">
-          {/* Brand Section */}
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg">
-                <Shield className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900">AuroScan</h3>
-                <p className="text-sm text-slate-600">HIPAA Compliance Scanner</p>
-              </div>
-            </div>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              AI-powered HIPAA compliance auditing for healthcare applications. Your code is secure and never stored.
-            </p>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-8">
           {/* Legal Section */}
           <div>
             <h4 className="font-bold text-slate-900 mb-4">Legal</h4>
