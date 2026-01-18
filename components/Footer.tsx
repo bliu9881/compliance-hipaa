@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, FileText, Mail, ExternalLink } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { PrivacyPolicy } from './PrivacyPolicy';
 
 interface TermsOfServiceProps {

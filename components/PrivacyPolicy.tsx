@@ -9,7 +9,8 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle,
-  ArrowLeft
+  ArrowLeft,
+  X
 } from 'lucide-react';
 
 interface PrivacyPolicyProps {
