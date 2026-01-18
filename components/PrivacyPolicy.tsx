@@ -326,7 +326,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
                 <div>
                   <h3 className="font-bold text-blue-900 mb-3">Contact Options</h3>
                   <ul className="space-y-2 text-sm text-blue-800">
-                    <li>• Email: privacy@auroscan.com</li>
+                    <li>• Email: support@auroscan.com</li>
                     <li>• Data Protection Officer available</li>
                     <li>• 24-hour response commitment</li>
                     <li>• Secure deletion within 48 hours</li>
