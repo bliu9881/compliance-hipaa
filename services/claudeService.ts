@@ -73,7 +73,8 @@ export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promi
     await delay(500);
     
     const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
+      // model: "claude-3-5-sonnet-20241022",
+      model: "anthropic.claude-haiku-4-5-20251001-v1:0",
       max_tokens: 4000,
       temperature: 0.1,
       messages: [{
