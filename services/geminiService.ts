@@ -52,6 +52,9 @@ const HIPAA_SCHEMA = {
 // Add delay function for rate limiting
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Cache for API key to avoid repeated requests
+let cachedApiKey: string | null = null;
+
 // Mock findings for testing when API is unavailable
 const generateMockFindings = (fileName: string): Finding[] => {
   const mockFindings = [
