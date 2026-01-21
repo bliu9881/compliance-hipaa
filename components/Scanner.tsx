@@ -453,21 +453,12 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <div className="p-2 bg-blue-100 text-blue-600 rounded-lg flex-shrink-0">
-                <Info className="w-5 h-5" />
+                <Shield className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <h4 className="font-bold text-blue-900 mb-1">Development Tool Notice</h4>
-                <p className="text-sm text-blue-800 leading-relaxed mb-3">
-                  This scanner uses HTTPS and AWS AI services for analysis. We store compliance findings, 
-                  not source code. Remove secrets before scanning.
+                <p className="text-sm text-blue-800">
+                  <span className="font-bold">Secure scanning:</span> We analyze code with HTTPS and AWS AI, storing only findings—not source code. Remove secrets before scanning.
                 </p>
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="text-xs font-bold text-blue-700 hover:text-blue-800 underline flex items-center gap-1"
-                >
-                  <Info className="w-3.5 h-3.5" />
-                  View Details & Best Practices
-                </button>
               </div>
             </div>
           </div>
