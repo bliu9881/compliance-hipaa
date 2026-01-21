@@ -89,9 +89,40 @@ const generateMockFindings = (fileName: string): Finding[] => {
   return mockFindings.slice(0, count);
 };
 
+// Cache for API key to avoid repeated requests
+let cachedApiKey: string | null = null;
+
+const getApiKey = async (): Promise<string> => {
+  // Return cached key if available
+  if (cachedApiKey) {
+    return cachedApiKey;
+  }
+
+  try {
+    // Try to get from Vite env first (local dev)
+    const viteKey = (globalThis as any).__VITE_GEMINI_API_KEY__;
+    if (viteKey) {
+      cachedApiKey = viteKey;
+      return viteKey;
+    }
+
+    // Fall back to fetching from server endpoint (production)
+    const response = await fetch('/api/config');
+    if (!response.ok) {
+      throw new Error('Failed to fetch API config');
+    }
+    const data = await response.json();
+    cachedApiKey = data.geminiApiKey;
+    return cachedApiKey;
+  } catch (error) {
+    console.error('Failed to get API key:', error);
+    return '';
+  }
+};
+
 export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promise<Finding[]> => {
-  // Get API key from Vite's injected global variable
-  const apiKey = (globalThis as any).__VITE_GEMINI_API_KEY__;
+  // Get API key from cache or fetch it
+  const apiKey = await getApiKey();
 
   console.log("🔍 Starting HIPAA analysis for:", fileName);
   console.log("🔑 API Key present:", !!apiKey);
