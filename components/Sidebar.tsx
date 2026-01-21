@@ -7,12 +7,10 @@ import {
   ShieldCheck, 
   FileText,
   LogOut,
-  Settings,
   X,
   Menu
 } from 'lucide-react';
 import { useAuth } from '../services/AuthContext';
-import { AIProviderSettings } from './AIProviderSettings';
 
 interface SidebarProps {
   activePage: string;
@@ -23,7 +21,6 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isOpen = true, onClose }) => {
   const { logout } = useAuth();
-  const [showAISettings, setShowAISettings] = useState(false);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -68,13 +65,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isOpen
 
         <div className="p-4 border-t border-slate-800 space-y-2">
           <button 
-            onClick={() => setShowAISettings(true)}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
-          >
-            <Settings className="w-5 h-5" />
-            <span className="font-medium">AI Model</span>
-          </button>
-          <button 
             onClick={logout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors"
           >
@@ -83,11 +73,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, onNavigate, isOpen
           </button>
         </div>
       </div>
-
-      <AIProviderSettings 
-        isOpen={showAISettings}
-        onClose={() => setShowAISettings(false)}
-      />
     </>
   );
 };
