@@ -95,6 +95,8 @@ export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promi
 
   console.log("🔍 Starting HIPAA analysis for:", fileName);
   console.log("🔑 API Key present:", !!apiKey);
+  console.log("🔑 API Key value (first 10 chars):", apiKey?.substring(0, 10) || 'undefined');
+  console.log("🔑 import.meta.env keys:", Object.keys(import.meta.env).filter(k => k.includes('GEMINI') || k.includes('VITE')));
   console.log("📝 Code length:", code.length);
 
   if (!apiKey) {
