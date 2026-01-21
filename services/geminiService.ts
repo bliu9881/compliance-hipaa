@@ -90,13 +90,12 @@ const generateMockFindings = (fileName: string): Finding[] => {
 };
 
 export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promise<Finding[]> => {
-  // Use VITE_GEMINI_API_KEY which is exposed to client by Vite
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  // Get API key from Vite's injected global variable
+  const apiKey = (globalThis as any).__VITE_GEMINI_API_KEY__;
 
   console.log("🔍 Starting HIPAA analysis for:", fileName);
   console.log("🔑 API Key present:", !!apiKey);
   console.log("🔑 API Key value (first 10 chars):", apiKey?.substring(0, 10) || 'undefined');
-  console.log("🔑 import.meta.env keys:", Object.keys(import.meta.env).filter(k => k.includes('GEMINI') || k.includes('VITE')));
   console.log("📝 Code length:", code.length);
 
   if (!apiKey) {
