@@ -111,10 +111,12 @@ const getApiKey = async (): Promise<string> => {
     // Fall back to fetching from server endpoint (production)
     console.log('🔑 Fetching API key from /api/config endpoint');
     const response = await fetch('/api/config');
+    console.log('🔑 Response status:', response.status);
     if (!response.ok) {
       throw new Error(`Failed to fetch API config: ${response.status}`);
     }
     const data = await response.json();
+    console.log('🔑 Response data:', data);
     console.log('🔑 Received API key from endpoint (first 10 chars):', data.geminiApiKey?.substring(0, 10) || 'undefined');
     cachedApiKey = data.geminiApiKey;
     return cachedApiKey;
