@@ -99,31 +99,15 @@ const getApiKey = async (): Promise<string> => {
     return cachedApiKey;
   }
 
-  try {
-    // Try to get from Vite env first (local dev)
-    const viteKey = (globalThis as any).__VITE_GEMINI_API_KEY__;
-    if (viteKey) {
-      console.log('🔑 Using Vite injected API key');
-      cachedApiKey = viteKey;
-      return viteKey;
-    }
-
-    // Fall back to fetching from server endpoint (production)
-    console.log('🔑 Fetching API key from /api/config endpoint');
-    const response = await fetch('/api/config');
-    console.log('🔑 Response status:', response.status);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch API config: ${response.status}`);
-    }
-    const data = await response.json();
-    console.log('🔑 Response data:', data);
-    console.log('🔑 Received API key from endpoint (first 10 chars):', data.geminiApiKey?.substring(0, 10) || 'undefined');
-    cachedApiKey = data.geminiApiKey;
-    return cachedApiKey;
-  } catch (error) {
-    console.error('❌ Failed to get API key:', error);
-    return '';
-  }
+  // Get from Vite's injected environment variable (works for both local and Vercel)
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+  
+  console.log('🔑 API key from import.meta.env.VITE_GEMINI_API_KEY');
+  console.log('🔑 API Key present:', !!apiKey);
+  console.log('🔑 API Key value (first 10 chars):', apiKey?.substring(0, 10) || 'undefined');
+  
+  cachedApiKey = apiKey;
+  return apiKey;
 };
 
 export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promise<Finding[]> => {
