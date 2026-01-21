@@ -89,12 +89,10 @@ const generateMockFindings = (fileName: string): Finding[] => {
   return mockFindings.slice(0, count);
 };
 
-// Cache for API key to avoid repeated requests
-let cachedApiKey: string | null = null;
-
 const getApiKey = async (): Promise<string> => {
   // Return cached key if available
   if (cachedApiKey) {
+    console.log('🔑 Using cached API key');
     return cachedApiKey;
   }
 
@@ -102,20 +100,23 @@ const getApiKey = async (): Promise<string> => {
     // Try to get from Vite env first (local dev)
     const viteKey = (globalThis as any).__VITE_GEMINI_API_KEY__;
     if (viteKey) {
+      console.log('🔑 Using Vite injected API key');
       cachedApiKey = viteKey;
       return viteKey;
     }
 
     // Fall back to fetching from server endpoint (production)
+    console.log('🔑 Fetching API key from /api/config endpoint');
     const response = await fetch('/api/config');
     if (!response.ok) {
-      throw new Error('Failed to fetch API config');
+      throw new Error(`Failed to fetch API config: ${response.status}`);
     }
     const data = await response.json();
+    console.log('🔑 Received API key from endpoint (first 10 chars):', data.geminiApiKey?.substring(0, 10) || 'undefined');
     cachedApiKey = data.geminiApiKey;
     return cachedApiKey;
   } catch (error) {
-    console.error('Failed to get API key:', error);
+    console.error('❌ Failed to get API key:', error);
     return '';
   }
 };
