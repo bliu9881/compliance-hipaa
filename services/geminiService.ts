@@ -90,23 +90,23 @@ const generateMockFindings = (fileName: string): Finding[] => {
 };
 
 export const analyzeCodeForHIPAA = async (code: string, fileName: string): Promise<Finding[]> => {
-  // Use process.env.API_KEY directly as per guidelines
-  const apiKey = process.env.API_KEY;
+  // Use VITE_GEMINI_API_KEY which is exposed to client by Vite
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
   console.log("🔍 Starting HIPAA analysis for:", fileName);
   console.log("🔑 API Key present:", !!apiKey);
   console.log("📝 Code length:", code.length);
 
   if (!apiKey) {
-    console.error("Gemini Scan Error: API_KEY is missing in environment variables.");
+    console.error("Gemini Scan Error: VITE_GEMINI_API_KEY is missing in environment variables.");
     return [{
       id: 'err-no-key',
       title: 'Configuration Error',
       severity: Severity.CRITICAL,
       category: 'System',
       description: 'The Gemini API Key is missing. The AI analysis cannot proceed.',
-      recommendation: 'Please ensure the API_KEY environment variable is configured in the environment settings.',
-      codeExample: '// API_KEY required'
+      recommendation: 'Please ensure VITE_GEMINI_API_KEY is set in your .env.local file.',
+      codeExample: '// VITE_GEMINI_API_KEY=your_key_here'
     }];
   }
 

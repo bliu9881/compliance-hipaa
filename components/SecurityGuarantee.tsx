@@ -54,165 +54,60 @@ export const SecurityGuarantee: React.FC<SecurityGuaranteeProps> = ({
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-4">
           {/* How It Works */}
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
-            <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-slate-600" />
-              How Our Scanner Works
-            </h4>
-            
-            <div className="space-y-3 text-sm text-slate-700">
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                <div>
-                  <strong>Code Upload:</strong> Your code is sent to our analysis API via HTTPS
-                </div>
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+            <p className="text-sm text-slate-700 leading-relaxed">
+              Your code is sent via <strong>HTTPS</strong> to AWS Bedrock for AI analysis. We store only 
+              <strong> compliance findings and metadata</strong>, not your source code. Remove any hardcoded 
+              secrets before scanning.
+            </p>
+          </div>
+
+          {/* Security Features Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Lock className="w-4 h-4 text-green-600" />
+                <h5 className="font-bold text-green-900 text-sm">HTTPS Encrypted</h5>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                <div>
-                  <strong>AI Analysis:</strong> AWS Bedrock AI models analyze your code for HIPAA compliance issues
-                </div>
+              <p className="text-xs text-green-800">Secure transmission</p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Server className="w-4 h-4 text-blue-600" />
+                <h5 className="font-bold text-blue-900 text-sm">AWS Bedrock</h5>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                <div>
-                  <strong>Results:</strong> Only compliance findings and metadata are returned and stored
-                </div>
+              <p className="text-xs text-blue-800">Cloud AI analysis</p>
+            </div>
+
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="w-4 h-4 text-purple-600" />
+                <h5 className="font-bold text-purple-900 text-sm">Findings Only</h5>
               </div>
+              <p className="text-xs text-purple-800">No source code stored</p>
+            </div>
+
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Eye className="w-4 h-4 text-orange-600" />
+                <h5 className="font-bold text-orange-900 text-sm">Private Access</h5>
+              </div>
+              <p className="text-xs text-orange-800">Only you can view</p>
             </div>
           </div>
 
-          {/* Current Security Measures */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-green-100 text-green-600 rounded-lg">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <h4 className="font-bold text-green-900">HTTPS Encryption</h4>
-              </div>
-              <p className="text-sm text-green-800 leading-relaxed">
-                Your code is transmitted using <strong>HTTPS encryption</strong> during upload and analysis.
-              </p>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                  <Server className="w-5 h-5" />
-                </div>
-                <h4 className="font-bold text-blue-900">Cloud Processing</h4>
-              </div>
-              <p className="text-sm text-blue-800 leading-relaxed">
-                Analysis is performed using <strong>AWS Bedrock AI</strong> in secure cloud infrastructure.
-              </p>
-            </div>
-
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <h4 className="font-bold text-purple-900">Findings Only</h4>
-              </div>
-              <p className="text-sm text-purple-800 leading-relaxed">
-                We store <strong>compliance findings and metadata</strong>, not your source code content.
-              </p>
-            </div>
-
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
-                  <Eye className="w-5 h-5" />
-                </div>
-                <h4 className="font-bold text-orange-900">Limited Access</h4>
-              </div>
-              <p className="text-sm text-orange-800 leading-relaxed">
-                Only you can access your scan results through your authenticated account.
-              </p>
-            </div>
-          </div>
-
-          {/* What We Store */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
-            <h4 className="font-bold text-amber-900 mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-amber-600" />
-              What We Store vs. What We Don't
-            </h4>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h5 className="font-semibold text-red-900 mb-3 flex items-center gap-2">
-                  <X className="w-4 h-4" />
-                  We Don't Store
-                </h5>
-                <ul className="space-y-2 text-sm text-slate-700">
-                  <li>• Your actual source code content</li>
-                  <li>• Variable names or function implementations</li>
-                  <li>• Comments or proprietary business logic</li>
-                  <li>• Complete file contents</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h5 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4" />
-                  We Do Store
-                </h5>
-                <ul className="space-y-2 text-sm text-slate-700">
-                  <li>• Compliance finding descriptions</li>
-                  <li>• File names and line numbers</li>
-                  <li>• Severity levels and categories</li>
-                  <li>• Scan timestamps and metadata</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Important Limitations */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          {/* Important Warning */}
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-6 h-6 text-red-600 mt-0.5 flex-shrink-0" />
+              <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
               <div>
-                <h4 className="font-bold text-red-900 mb-2">Important Considerations</h4>
-                <div className="space-y-3 text-sm text-red-800 leading-relaxed">
-                  <p>
-                    <strong>This is a development tool:</strong> While we use HTTPS and don't intentionally store 
-                    source code, this scanner is designed for development and testing purposes.
-                  </p>
-                  <p>
-                    <strong>Best practices:</strong> Remove any hardcoded secrets, API keys, passwords, 
-                    or sensitive credentials before scanning.
-                  </p>
-                  <p>
-                    <strong>Production code:</strong> Consider using test/development code for initial scans 
-                    rather than production systems.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Third-Party Services */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h4 className="font-bold text-blue-900 mb-4 flex items-center gap-2">
-              <Server className="w-5 h-5 text-blue-600" />
-              Third-Party Services Used
-            </h4>
-            
-            <div className="space-y-3 text-sm text-blue-800">
-              <div>
-                <strong>AWS Bedrock:</strong> AI analysis is performed using Amazon's Bedrock service, 
-                which has its own security and privacy policies.
-              </div>
-              <div>
-                <strong>Vercel/Hosting:</strong> Application is hosted on cloud infrastructure with 
-                standard security measures.
-              </div>
-              <div>
-                <strong>Supabase:</strong> Scan results and user data are stored in Supabase database.
+                <p className="text-sm text-red-800 leading-relaxed">
+                  <strong>Development tool:</strong> Remove hardcoded secrets, API keys, and passwords before scanning. 
+                  Use test/development code rather than production systems.
+                </p>
               </div>
             </div>
           </div>
