@@ -1,4 +1,29 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
+import hipaaConfig from '../config/hipaa-regulations.json';
+
+/**
+ * Build regulation context from the current HIPAA regulations JSON
+ */
+function buildRegulationContext(): string {
+  const { version, lastUpdated, modernRequirements, penaltyTiers } = hipaaConfig;
+  
+  return `
+CURRENT HIPAA REGULATIONS CONTEXT:
+Version: ${version} (Last Updated: ${lastUpdated})
+
+MODERN CYBERSECURITY REQUIREMENTS (2024):
+${modernRequirements.cybersecurity.map((req, i) => `${i + 1}. ${req}`).join('\n')}
+
+TECHNICAL SAFEGUARDS REQUIREMENTS:
+${modernRequirements.technicalSafeguards.map((req, i) => `${i + 1}. ${req}`).join('\n')}
+
+PENALTY TIERS FOR VIOLATIONS:
+- Tier 1 (Unknowing): $${penaltyTiers.tier1.minPenalty.toLocaleString()}-$${penaltyTiers.tier1.maxPenalty.toLocaleString()}
+- Tier 2 (Reasonable Cause): $${penaltyTiers.tier2.minPenalty.toLocaleString()}-$${penaltyTiers.tier2.maxPenalty.toLocaleString()}
+- Tier 3 (Willful Neglect - Corrected): $${penaltyTiers.tier3.minPenalty.toLocaleString()}-$${penaltyTiers.tier3.maxPenalty.toLocaleString()}
+- Tier 4 (Willful Neglect - Not Corrected): $${penaltyTiers.tier4.minPenalty.toLocaleString()}-$${penaltyTiers.tier4.maxPenalty.toLocaleString()}
+  `.trim();
+}
 
 export default async function handler(req: any, res: any) {
   // Only allow POST requests
@@ -22,7 +47,27 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: 'AWS credentials not configured' });
   }
 
+  // Build regulation context
+  const regulationContext = buildRegulationContext();
+
   const prompt = `Human: Perform a comprehensive HIPAA compliance audit on the following code snippet from file "${fileName}".
+
+${regulationContext}
+
+ANALYSIS INSTRUCTIONS:
+- Examine each line of code systematically for HIPAA violations
+- Look for multiple violations per line when they exist
+- Consider both obvious security issues and subtle compliance gaps
+- Analyze code patterns, configurations, and missing security controls
+- Be thorough but focus on realistic, actionable violations
+- Reference the modern cybersecurity requirements and technical safeguards listed above
+- Consider the financial impact based on penalty tiers if violations are not corrected
+
+IMPORTANT: For each violation found, you MUST provide:
+1. The exact file name: "${fileName}"
+2. The specific line number where the violation occurs
+3. If the violation spans multiple lines, provide the starting line number
+4. Reference which modern requirement or technical safeguard is violated
 
 ANALYSIS INSTRUCTIONS:
 - Examine each line of code systematically for HIPAA violations
