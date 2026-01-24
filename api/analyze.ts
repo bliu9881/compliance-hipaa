@@ -1,13 +1,20 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
-import hipaaConfig from '../config/hipaa-regulations.json';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Build regulation context from the current HIPAA regulations JSON
  */
 function buildRegulationContext(): string {
-  const { version, lastUpdated, modernRequirements, penaltyTiers } = hipaaConfig;
-  
-  return `
+  try {
+    // Read the regulations file at runtime
+    const regulationsPath = path.join(process.cwd(), 'compliance-hipaa/config/hipaa-regulations.json');
+    const regulationsContent = fs.readFileSync(regulationsPath, 'utf-8');
+    const hipaaConfig = JSON.parse(regulationsContent);
+    
+    const { version, lastUpdated, modernRequirements, penaltyTiers } = hipaaConfig;
+    
+    return `
 CURRENT HIPAA REGULATIONS CONTEXT:
 Version: ${version} (Last Updated: ${lastUpdated})
 
@@ -22,7 +29,35 @@ PENALTY TIERS FOR VIOLATIONS:
 - Tier 2 (Reasonable Cause): $${penaltyTiers.tier2.minPenalty.toLocaleString()}-$${penaltyTiers.tier2.maxPenalty.toLocaleString()}
 - Tier 3 (Willful Neglect - Corrected): $${penaltyTiers.tier3.minPenalty.toLocaleString()}-$${penaltyTiers.tier3.maxPenalty.toLocaleString()}
 - Tier 4 (Willful Neglect - Not Corrected): $${penaltyTiers.tier4.minPenalty.toLocaleString()}-$${penaltyTiers.tier4.maxPenalty.toLocaleString()}
-  `.trim();
+    `.trim();
+  } catch (error) {
+    console.warn('Failed to load regulations, using defaults:', error);
+    // Return basic context if file cannot be read
+    return `
+CURRENT HIPAA REGULATIONS CONTEXT:
+Version: 2024.1 (Last Updated: 2024-01-02)
+
+MODERN CYBERSECURITY REQUIREMENTS (2024):
+1. Multi-factor authentication for PHI access
+2. Zero-trust network architecture
+3. Cloud security configurations
+4. API security controls
+5. Container security
+6. Supply chain security
+7. AI/ML security for PHI processing
+8. Remote work security controls
+
+TECHNICAL SAFEGUARDS REQUIREMENTS:
+1. Encryption at rest (AES-256 minimum)
+2. Encryption in transit (TLS 1.3 minimum)
+3. Database encryption
+4. Key management systems
+5. Secure coding practices
+6. Vulnerability management
+7. Incident response automation
+8. Continuous monitoring
+    `.trim();
+  }
 }
 
 export default async function handler(req: any, res: any) {
@@ -68,18 +103,6 @@ IMPORTANT: For each violation found, you MUST provide:
 2. The specific line number where the violation occurs
 3. If the violation spans multiple lines, provide the starting line number
 4. Reference which modern requirement or technical safeguard is violated
-
-ANALYSIS INSTRUCTIONS:
-- Examine each line of code systematically for HIPAA violations
-- Look for multiple violations per line when they exist
-- Consider both obvious security issues and subtle compliance gaps
-- Analyze code patterns, configurations, and missing security controls
-- Be thorough but focus on realistic, actionable violations
-
-IMPORTANT: For each violation found, you MUST provide:
-1. The exact file name: "${fileName}"
-2. The specific line number where the violation occurs
-3. If the violation spans multiple lines, provide the starting line number
 
 Analyze for these HIPAA compliance violations:
 
