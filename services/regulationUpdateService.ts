@@ -5,18 +5,24 @@ export interface RegulationUpdate {
   lastUpdated: string;
   hasUpdates: boolean;
   updateSummary?: string[];
+  lastChecked?: string;
 }
 
 /**
  * Service to check for HIPAA regulation updates and ensure compliance audits use latest rules
+ * Fetches from official HHS sources weekly and updates the regulations JSON
  */
 export class RegulationUpdateService {
   private static instance: RegulationUpdateService;
   private lastCheckDate: Date;
   private currentVersion: string;
+  private readonly STORAGE_KEY = 'hipaa_last_regulation_check';
+  private readonly CHECK_INTERVAL_DAYS = 7;
 
   private constructor() {
-    this.lastCheckDate = new Date();
+    // Load last check date from localStorage if available
+    const stored = typeof window !== 'undefined' ? localStorage.getItem(this.STORAGE_KEY) : null;
+    this.lastCheckDate = stored ? new Date(stored) : new Date(0);
     this.currentVersion = hipaaConfig.version;
   }
 
@@ -28,44 +34,76 @@ export class RegulationUpdateService {
   }
 
   /**
-   * Check if we need to update our HIPAA regulation knowledge
+   * Check if we need to update our HIPAA regulation knowledge from official HHS sources
+   * Performs weekly checks against HHS.gov cybersecurity guidance
    */
   public async checkForUpdates(): Promise<RegulationUpdate> {
     const now = new Date();
     const daysSinceLastCheck = Math.floor((now.getTime() - this.lastCheckDate.getTime()) / (1000 * 60 * 60 * 24));
     
-    // Check for updates weekly
-    if (daysSinceLastCheck < 7) {
+    // Only check weekly to avoid excessive API calls
+    if (daysSinceLastCheck < this.CHECK_INTERVAL_DAYS) {
+      console.log(`📋 Regulation check skipped (last checked ${daysSinceLastCheck} days ago)`);
       return {
         version: this.currentVersion,
         lastUpdated: hipaaConfig.lastUpdated,
-        hasUpdates: false
+        hasUpdates: false,
+        lastChecked: this.lastCheckDate.toISOString()
       };
     }
 
     try {
-      // In a real implementation, this would check HHS.gov APIs or RSS feeds
-      // For now, we'll simulate checking against our config
-      const hasUpdates = await this.simulateUpdateCheck();
+      console.log('🔍 Checking HHS.gov for HIPAA regulation updates...');
       
+      // Call our backend API to check for updates
+      const response = await fetch('/api/regulations-update');
+      
+      if (!response.ok) {
+        throw new Error(`Update check failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Update last check date
       this.lastCheckDate = now;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(this.STORAGE_KEY, now.toISOString());
+      }
       
+      if (result.hasUpdates) {
+        console.log('✅ Regulation updates found:', result.changes);
+        this.currentVersion = result.newVersion;
+        
+        return {
+          version: result.newVersion,
+          lastUpdated: hipaaConfig.lastUpdated,
+          hasUpdates: true,
+          updateSummary: result.changes,
+          lastChecked: result.lastChecked
+        };
+      }
+      
+      console.log('✓ Regulations are current');
       return {
         version: this.currentVersion,
         lastUpdated: hipaaConfig.lastUpdated,
-        hasUpdates,
-        updateSummary: hasUpdates ? [
-          'New cybersecurity guidance from OCR',
-          'Updated penalty amounts for 2024',
-          'Enhanced cloud security requirements'
-        ] : undefined
+        hasUpdates: false,
+        lastChecked: result.lastChecked
       };
     } catch (error) {
-      console.warn('Failed to check for regulation updates:', error);
+      console.warn('⚠️ Failed to check for regulation updates:', error);
+      
+      // Update last check date even on error to avoid hammering the API
+      this.lastCheckDate = now;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(this.STORAGE_KEY, now.toISOString());
+      }
+      
       return {
         version: this.currentVersion,
         lastUpdated: hipaaConfig.lastUpdated,
-        hasUpdates: false
+        hasUpdates: false,
+        lastChecked: now.toISOString()
       };
     }
   }
@@ -106,17 +144,7 @@ ${info.modernRequirements.technicalSafeguards.map(req => `- ${req}`).join('\n')}
     `.trim();
   }
 
-  /**
-   * Simulate checking for regulation updates
-   * In production, this would check official sources
-   */
-  private async simulateUpdateCheck(): Promise<boolean> {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Randomly return true 10% of the time to simulate updates
-    return Math.random() < 0.1;
-  }
+
 
   /**
    * Get official sources for HIPAA regulations

@@ -9,9 +9,12 @@ import {
   ArrowRight,
   FileText,
   ShieldCheck,
-  Loader2
+  Loader2,
+  RefreshCw,
+  Info
 } from 'lucide-react';
 import { getScans } from '../services/scanService';
+import { regulationUpdateService } from '../services/regulationUpdateService';
 import { ScanResult, Severity } from '../types';
 
 interface DashboardProps {
@@ -22,11 +25,18 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ onStartScan, onViewReport }) => {
   const [scans, setScans] = useState<ScanResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [regulationUpdate, setRegulationUpdate] = useState<any>(null);
+  const [showRegulationDetails, setShowRegulationDetails] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       const data = await getScans();
       setScans(data);
+      
+      // Check for regulation updates
+      const update = await regulationUpdateService.checkForUpdates();
+      setRegulationUpdate(update);
+      
       setLoading(false);
     };
     fetchData();
@@ -145,6 +155,67 @@ export const Dashboard: React.FC<DashboardProps> = ({ onStartScan, onViewReport 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
+          {/* Regulation Status Alert */}
+          {regulationUpdate && (
+            <div className={`rounded-xl border p-4 flex items-start gap-4 ${
+              regulationUpdate.hasUpdates 
+                ? 'bg-blue-50 border-blue-200' 
+                : 'bg-emerald-50 border-emerald-200'
+            }`}>
+              <div className={`p-2 rounded-lg ${
+                regulationUpdate.hasUpdates 
+                  ? 'bg-blue-100 text-blue-600' 
+                  : 'bg-emerald-100 text-emerald-600'
+              }`}>
+                {regulationUpdate.hasUpdates ? (
+                  <RefreshCw className="w-5 h-5" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5" />
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className={`font-semibold ${
+                  regulationUpdate.hasUpdates 
+                    ? 'text-blue-900' 
+                    : 'text-emerald-900'
+                }`}>
+                  {regulationUpdate.hasUpdates ? 'HIPAA Regulations Updated' : 'Regulations Current'}
+                </h3>
+                <p className={`text-sm mt-1 ${
+                  regulationUpdate.hasUpdates 
+                    ? 'text-blue-700' 
+                    : 'text-emerald-700'
+                }`}>
+                  Version {regulationUpdate.version} • Last checked: {new Date(regulationUpdate.lastChecked).toLocaleDateString()}
+                </p>
+                {regulationUpdate.hasUpdates && regulationUpdate.updateSummary && (
+                  <button
+                    onClick={() => setShowRegulationDetails(!showRegulationDetails)}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-semibold mt-2 flex items-center gap-1"
+                  >
+                    <Info className="w-4 h-4" />
+                    View updates ({regulationUpdate.updateSummary.length})
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Regulation Details */}
+          {showRegulationDetails && regulationUpdate?.updateSummary && (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+              <h3 className="font-semibold text-slate-900 mb-3">Latest Regulation Updates</h3>
+              <ul className="space-y-2">
+                {regulationUpdate.updateSummary.map((update: string, idx: number) => (
+                  <li key={idx} className="text-sm text-slate-600 flex items-start gap-2">
+                    <span className="text-emerald-600 font-bold mt-0.5">•</span>
+                    <span>{update}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="font-bold text-slate-900">Recent Audit History</h2>
