@@ -98,11 +98,25 @@ ANALYSIS INSTRUCTIONS:
 - Reference the modern cybersecurity requirements and technical safeguards listed above
 - Consider the financial impact based on penalty tiers if violations are not corrected
 
-IMPORTANT: For each violation found, you MUST provide:
+CRITICAL REQUIREMENTS FOR EACH FINDING:
 1. The exact file name: "${fileName}"
 2. The specific line number where the violation occurs
 3. If the violation spans multiple lines, provide the starting line number
-4. Reference which modern requirement or technical safeguard is violated
+4. MUST reference which specific modern requirement or technical safeguard is violated (e.g., "violates Technical Safeguards requirement #1: Encryption at rest (AES-256 minimum)")
+5. MUST include the financial penalty impact (e.g., "Tier 3-4 penalties: $13,785-$2,067,840")
+6. MUST be specific and detailed - not generic
+
+EXAMPLE OF GOOD FINDING:
+{
+  "title": "Missing Encryption at Rest",
+  "severity": "CRITICAL",
+  "category": "Technical Safeguards",
+  "description": "Database credentials stored in plaintext without encryption. Violates Technical Safeguards requirement #1 (Encryption at rest - AES-256 minimum) and modern requirement 'Encryption at rest (AES-256 minimum)'. Unencrypted PHI storage exposes sensitive health information to unauthorized access.",
+  "recommendation": "Implement AES-256 encryption for all data at rest, including database credentials and PHI storage.",
+  "codeExample": "const encrypted = crypto.createCipheriv('aes-256-cbc', key, iv); // Use AES-256 encryption",
+  "file": "${fileName}",
+  "line": 42
+}
 
 Analyze for these HIPAA compliance violations:
 
@@ -147,14 +161,20 @@ INFRASTRUCTURE & CLOUD SECURITY:
 30. Inadequate data retention and disposal policies
 
 Return your findings as a JSON array. Each finding MUST have exactly these fields:
-- title: string (concise violation title)
+- title: string (concise violation title that references the specific requirement)
 - severity: string (exactly one of: "CRITICAL", "HIGH", "MEDIUM", "LOW")
 - category: string (HIPAA category like "Technical Safeguards", "Privacy Rule", "Administrative Safeguards")
-- description: string (detailed explanation of the violation and its HIPAA implications)
-- recommendation: string (specific actionable fix)
+- description: string (MUST include: detailed explanation + which specific requirement is violated + financial penalty tier impact)
+- recommendation: string (specific actionable fix with implementation details)
 - codeExample: string (secure code snippet to resolve the issue)
 - file: string (MUST be "${fileName}")
 - line: number (specific line number where violation occurs - count from 1)
+
+DESCRIPTION FIELD REQUIREMENTS:
+- Start with the violation details
+- Include the exact requirement violated (e.g., "violates Technical Safeguards requirement #1: Encryption at rest (AES-256 minimum)")
+- Include the penalty tier impact (e.g., "Tier 3-4 penalties: $13,785-$2,067,840 for willful neglect")
+- Explain HIPAA implications
 
 Code to analyze (with line numbers):
 \`\`\`
