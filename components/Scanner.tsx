@@ -1,11 +1,9 @@
 
 import React, { useState } from 'react';
 import { 
-  Github, 
   Upload, 
   ScanSearch, 
   Loader2, 
-  ChevronRight, 
   Info,
   History,
   AlertCircle,
@@ -14,9 +12,9 @@ import {
   Trash2,
   Shield
 } from 'lucide-react';
-import { performGitHubScan, performFileUploadScan } from '../services/scanService';
+import { performGitHubScan, performFileUploadScan, stopScan } from '../services/scanService';
 import { SecurityGuarantee } from './SecurityGuarantee';
-import { SecurityBadge } from './SecurityBadge';
+import { GithubIcon } from 'lucide-react';
 
 interface ScannerProps {
   onScanComplete: (id: string) => void;
@@ -149,8 +147,12 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   };
 
   const confirmStopScan = () => {
+    stopScan(); // Call the service function to abort the scan
     setShouldStopScan(true);
     setShowStopConfirmation(false);
+    setIsScanning(false);
+    setScanProgress(null);
+    setError('Scan cancelled by user.');
   };
 
   const cancelStopScan = () => {
@@ -264,7 +266,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
             onClick={() => setMethod('github')}
             className={`flex-1 py-4 flex items-center justify-center gap-2 font-semibold transition-colors ${method === 'github' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
           >
-            <Github className="w-5 h-5" />
+            <GithubIcon className="w-5 h-5" />
             GitHub Repository
           </button>
           <button 
@@ -290,7 +292,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
                 <label className="block text-sm font-bold text-slate-700 mb-2">Public Repository URL</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                    <Github className="w-5 h-5" />
+                    <GithubIcon className="w-5 h-5" />
                   </div>
                   <input 
                     type="text" 

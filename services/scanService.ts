@@ -199,8 +199,24 @@ const getRepoFiles = async (owner: string, repo: string, path: string = '', maxF
   return allFiles;
 };
 
+// Global abort controller for stopping scans
+let scanAbortController: AbortController | null = null;
+
+/**
+ * Stops the currently running scan
+ */
+export const stopScan = () => {
+  if (scanAbortController) {
+    console.log("🛑 Aborting scan...");
+    scanAbortController.abort();
+  }
+};
+
 export const performGitHubScan = async (repoUrl: string, isIncremental: boolean, onProgress?: (progress: { fileName: string; current: number; total: number; percentage: number }) => void): Promise<ScanResult> => {
   console.log("🚀 Starting GitHub scan for:", repoUrl);
+  
+  // Create new abort controller for this scan
+  scanAbortController = new AbortController();
   
   const repoInfo = parseGitHubUrl(repoUrl);
   if (!repoInfo) throw new Error('Invalid GitHub URL');
@@ -243,6 +259,12 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean,
   let allFindings: Finding[] = [];
 
   for (let index = 0; index < filesToScan.length; index++) {
+    // Check if scan was aborted BEFORE processing the file
+    if (scanAbortController?.signal.aborted) {
+      console.log("⛔ Scan aborted by user");
+      throw new Error('Scan cancelled by user');
+    }
+
     const file = filesToScan[index];
     console.log("🔍 Analyzing file:", file.path || file.name);
     
@@ -287,11 +309,20 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean,
 };
 
 export const performFileUploadScan = async (files: File[], onProgress?: (progress: { fileName: string; current: number; total: number; percentage: number }) => void): Promise<ScanResult> => {
+  // Create new abort controller for this scan
+  scanAbortController = new AbortController();
+  
   let allFindings: Finding[] = [];
   
   console.log("📁 Total files uploaded for scanning:", files.length);
   
   for (let index = 0; index < files.length; index++) {
+    // Check if scan was aborted BEFORE processing the file
+    if (scanAbortController?.signal.aborted) {
+      console.log("⛔ Scan aborted by user");
+      throw new Error('Scan cancelled by user');
+    }
+
     const file = files[index];
     console.log("🔍 Analyzing uploaded file:", file.name);
     
