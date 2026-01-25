@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Upload, 
   ScanSearch, 
@@ -23,6 +23,7 @@ interface ScannerProps {
 export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   const [method, setMethod] = useState<'github' | 'upload'>('github');
   const [repoUrl, setRepoUrl] = useState('');
+  const [githubToken, setGithubToken] = useState('');
   const [isIncremental, setIsIncremental] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
   const [scanStage, setScanStage] = useState('');
@@ -34,6 +35,29 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   const [scanProgress, setScanProgress] = useState<{ fileName: string; current: number; total: number; percentage: number } | null>(null);
   const [shouldStopScan, setShouldStopScan] = useState(false);
   const [showStopConfirmation, setShowStopConfirmation] = useState(false);
+
+  // Retrieve token from sessionStorage on component mount
+  useEffect(() => {
+    const storedToken = sessionStorage.getItem('github_token');
+    if (storedToken) {
+      setGithubToken(storedToken);
+    }
+  }, []);
+
+  const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const token = e.target.value;
+    setGithubToken(token);
+    if (token) {
+      sessionStorage.setItem('github_token', token);
+    } else {
+      sessionStorage.removeItem('github_token');
+    }
+  };
+
+  const handleTokenClear = () => {
+    setGithubToken('');
+    sessionStorage.removeItem('github_token');
+  };
 
   const handleGitHubScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -302,6 +326,45 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
                     className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2">GitHub Personal Access Token (Optional)</label>
+                <div className="relative">
+                  <input 
+                    type="password" 
+                    value={githubToken}
+                    onChange={handleTokenChange}
+                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  />
+                  {githubToken && (
+                    <button
+                      type="button"
+                      onClick={handleTokenClear}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-red-600 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  Optional: Provide a GitHub personal access token to scan private repositories.{' '}
+                  <a 
+                    href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-emerald-600 hover:text-emerald-700 font-medium"
+                  >
+                    Learn how to create a token
+                  </a>
+                </p>
+                {githubToken && githubToken.length < 40 && (
+                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    Token appears to be invalid format (should be 40+ characters)
+                  </p>
+                )}
               </div>
 
               <div className="bg-slate-50 p-4 rounded-xl flex items-center justify-between">

@@ -35,7 +35,15 @@ npm run build
 
 # Preview production build
 npm run preview
+
+# Run tests (single run, not watch mode)
+npm run test -- --run
+
+# Run specific test file
+npm run test -- scanService.test.ts --run
 ```
+
+**Important**: When running npm test commands, use `npm run test -- --run` (NOT `npm run test -- scanService.test.ts --run --run`). Do NOT pass `--run` twice - vitest will error with "Expected a single value for option". Always use the format: `npm run test -- <file> --run` (single `--run` flag)
 
 ## Environment Configuration
 

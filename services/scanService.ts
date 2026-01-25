@@ -137,6 +137,42 @@ const getSummary = (findings: Finding[]) => {
   }, { critical: 0, high: 0, medium: 0, low: 0 });
 };
 
+/**
+ * Retrieves GitHub authentication header from session storage
+ * Returns Authorization header object if token exists, empty object otherwise
+ */
+const getGitHubAuthHeader = (): Record<string, string> => {
+  const token = sessionStorage.getItem('github_token');
+  if (token) {
+    return {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github.v3+json'
+    };
+  }
+  return {};
+};
+
+/**
+ * Maps HTTP status codes to user-friendly error messages for GitHub API failures
+ * Handles 401 (auth failed), 403 (no permissions), 404 (private repo or not found)
+ */
+const handleGitHubError = (response: Response): string => {
+  if (response.status === 401) {
+    return 'GitHub authentication failed. Please verify your token is valid and has "repo" scope permissions.';
+  }
+  if (response.status === 403) {
+    return 'Your GitHub token does not have required permissions. Please ensure it has "repo" scope.';
+  }
+  if (response.status === 404) {
+    const token = sessionStorage.getItem('github_token');
+    if (!token) {
+      return 'Repository is private. Please provide a GitHub personal access token to scan private repositories.';
+    }
+    return 'Repository not found. Please verify the URL is correct.';
+  }
+  return 'Failed to access GitHub repository. Please try again.';
+};
+
 const parseGitHubUrl = (url: string) => {
   try {
     const cleanUrl = url.replace(/\/$/, '');
@@ -151,8 +187,11 @@ const parseGitHubUrl = (url: string) => {
 };
 
 const getLatestCommitSha = async (owner: string, repo: string) => {
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/HEAD`);
-  if (!response.ok) throw new Error('Failed to fetch commit info. Is the repo public?');
+  const headers = getGitHubAuthHeader();
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/HEAD`, { headers });
+  if (!response.ok) {
+    throw new Error(handleGitHubError(response));
+  }
   const data = await response.json();
   return data.sha;
 };
@@ -160,9 +199,12 @@ const getLatestCommitSha = async (owner: string, repo: string) => {
 const getRepoFiles = async (owner: string, repo: string, path: string = '', maxFiles: number = 50): Promise<any[]> => {
   console.log(`📂 Scanning directory: ${path || 'root'}`);
   
+  const headers = getGitHubAuthHeader();
   const url = `https://api.github.com/repos/${owner}/${repo}/contents${path ? `/${path}` : ''}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Failed to fetch repository contents for ${path || 'root'}`);
+  const response = await fetch(url, { headers });
+  if (!response.ok) {
+    throw new Error(handleGitHubError(response));
+  }
   const contents = await response.json();
   
   let allFiles: any[] = [];
@@ -211,6 +253,11 @@ export const stopScan = () => {
     scanAbortController.abort();
   }
 };
+
+/**
+ * Exported for testing: Maps HTTP status codes to user-friendly error messages
+ */
+export { handleGitHubError };
 
 export const performGitHubScan = async (repoUrl: string, isIncremental: boolean, onProgress?: (progress: { fileName: string; current: number; total: number; percentage: number }) => void): Promise<ScanResult> => {
   console.log("🚀 Starting GitHub scan for:", repoUrl);
@@ -279,7 +326,11 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean,
       });
     }
     
-    const contentResponse = await fetch(file.download_url);
+    const headers = getGitHubAuthHeader();
+    const contentResponse = await fetch(file.download_url, { headers });
+    if (!contentResponse.ok) {
+      throw new Error(handleGitHubError(contentResponse));
+    }
     const code = await contentResponse.text();
     console.log("📄 File content length:", code.length);
     
