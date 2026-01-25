@@ -567,7 +567,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
 
       {/* Security Guarantee Modal */}
       <SecurityGuarantee
-        isOpen={showSecurityModal}
+        isOpen={showSecurityModal && !showStopConfirmation}
         onClose={handleSecurityCancel}
         onAccept={handleSecurityAccept}
       />
