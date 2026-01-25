@@ -1,0 +1,7 @@
+{
+  "name": "github-proxy",
+  "version": "1.0.0",
+  "description": "GitHub API proxy Lambda function",
+  "main": "index.js",
+  "license": "MIT"
+}

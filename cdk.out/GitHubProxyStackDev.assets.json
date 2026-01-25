@@ -1,0 +1,36 @@
+{
+  "version": "48.0.0",
+  "files": {
+    "787fc72a6a590ebe112d1465a8e8b78c240877ae8f658782daab9230776b2e8b": {
+      "displayName": "GitHubProxyFunction/Code",
+      "source": {
+        "path": "asset.787fc72a6a590ebe112d1465a8e8b78c240877ae8f658782daab9230776b2e8b",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "779227446268-us-east-1-6ace3076": {
+          "bucketName": "cdk-hnb659fds-assets-779227446268-us-east-1",
+          "objectKey": "787fc72a6a590ebe112d1465a8e8b78c240877ae8f658782daab9230776b2e8b.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::779227446268:role/cdk-hnb659fds-file-publishing-role-779227446268-us-east-1"
+        }
+      }
+    },
+    "7b1b906de31e213871102c7bdb1940045aef7c22fa84f80fc61f8bdcdcc3aa7b": {
+      "displayName": "GitHubProxyStackDev Template",
+      "source": {
+        "path": "GitHubProxyStackDev.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "779227446268-us-east-1-3ac66752": {
+          "bucketName": "cdk-hnb659fds-assets-779227446268-us-east-1",
+          "objectKey": "7b1b906de31e213871102c7bdb1940045aef7c22fa84f80fc61f8bdcdcc3aa7b.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::779227446268:role/cdk-hnb659fds-file-publishing-role-779227446268-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

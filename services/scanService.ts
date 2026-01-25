@@ -5,6 +5,47 @@ import { supabase } from './supabase';
 
 const LOCAL_STORAGE_KEY = 'auroscan_scans';
 
+const GITHUB_PROXY_URL = 'https://5e7x5d3glg.execute-api.us-east-1.amazonaws.com/dev/proxy';
+
+/**
+ * Makes a request to GitHub API with proper error handling
+ * Supports both direct API calls and proxy calls
+ */
+const callGitHubAPI = async (
+  action: 'getCommitSha' | 'getRepoContents' | 'getFileContent',
+  owner: string,
+  repo: string,
+  path?: string,
+  token?: string
+): Promise<any> => {
+  const response = await fetch(GITHUB_PROXY_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      action,
+      owner,
+      repo,
+      path,
+      token,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error || `Proxy error: ${response.statusText}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error || 'Proxy request failed');
+  }
+
+  return result.data;
+};
+
+
 /**
  * Saves a scan result to Supabase with LocalStorage fallback
  */
@@ -173,6 +214,13 @@ const handleGitHubError = (response: Response): string => {
   return 'Failed to access GitHub repository. Please try again.';
 };
 
+/**
+ * Handles CORS errors from GitHub API
+ */
+const handleCORSError = (): string => {
+  return 'GitHub API access blocked by browser CORS policy. This is a browser security restriction. To scan repositories, you can:\n\n1. Use a GitHub token (already supported)\n2. Deploy this app to a server with a backend proxy\n3. Use a CORS proxy service\n\nFor now, please ensure you have a valid GitHub Personal Access Token with "repo" scope.';
+};
+
 const parseGitHubUrl = (url: string) => {
   try {
     const cleanUrl = url.replace(/\/$/, '');
@@ -187,17 +235,13 @@ const parseGitHubUrl = (url: string) => {
 };
 
 const getLatestCommitSha = async (owner: string, repo: string) => {
-  const headers = getGitHubAuthHeader();
   try {
-    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/HEAD`, { headers });
-    if (!response.ok) {
-      throw new Error(handleGitHubError(response));
-    }
-    const data = await response.json();
+    const token = sessionStorage.getItem('github_token');
+    const data = await callGitHubAPI('getCommitSha', owner, repo, undefined, token || undefined);
     return data.sha;
   } catch (error: any) {
     if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-      throw new Error('Unable to connect to GitHub API. This may be due to CORS restrictions. Please ensure you have a valid GitHub token with "repo" scope for private repositories.');
+      throw new Error(handleCORSError());
     }
     throw error;
   }
@@ -206,14 +250,9 @@ const getLatestCommitSha = async (owner: string, repo: string) => {
 const getRepoFiles = async (owner: string, repo: string, path: string = '', maxFiles: number = 50): Promise<any[]> => {
   console.log(`📂 Scanning directory: ${path || 'root'}`);
   
-  const headers = getGitHubAuthHeader();
-  const url = `https://api.github.com/repos/${owner}/${repo}/contents${path ? `/${path}` : ''}`;
   try {
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-      throw new Error(handleGitHubError(response));
-    }
-    const contents = await response.json();
+    const token = sessionStorage.getItem('github_token');
+    const contents = await callGitHubAPI('getRepoContents', owner, repo, path || undefined, token || undefined);
     
     let allFiles: any[] = [];
     
@@ -249,7 +288,7 @@ const getRepoFiles = async (owner: string, repo: string, path: string = '', maxF
     return allFiles;
   } catch (error: any) {
     if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-      throw new Error('Unable to connect to GitHub API. This may be due to CORS restrictions. Please ensure you have a valid GitHub token with "repo" scope for private repositories.');
+      throw new Error(handleCORSError());
     }
     throw error;
   }
@@ -271,7 +310,7 @@ export const stopScan = () => {
 /**
  * Exported for testing: Maps HTTP status codes to user-friendly error messages
  */
-export { handleGitHubError };
+export { handleGitHubError, handleCORSError };
 
 export const performGitHubScan = async (repoUrl: string, isIncremental: boolean, onProgress?: (progress: { fileName: string; current: number; total: number; percentage: number }) => void): Promise<ScanResult> => {
   console.log("🚀 Starting GitHub scan for:", repoUrl);
@@ -340,18 +379,20 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean,
       });
     }
     
-    const headers = getGitHubAuthHeader();
     try {
-      // Use GitHub API endpoint instead of raw.githubusercontent.com for better CORS support
-      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${file.path}`;
-      const contentResponse = await fetch(apiUrl, { headers });
-      if (!contentResponse.ok) {
-        throw new Error(handleGitHubError(contentResponse));
-      }
-      const data = await contentResponse.json();
+      const token = sessionStorage.getItem('github_token');
+      const data = await callGitHubAPI('getFileContent', owner, repo, file.path, token || undefined);
       
       // Decode base64 content from API response
-      const code = atob(data.content);
+      let code: string;
+      if (typeof data === 'string') {
+        code = data;
+      } else if (data.content) {
+        code = atob(data.content);
+      } else {
+        throw new Error('No content found in GitHub response');
+      }
+      
       console.log("📄 File content length:", code.length);
       
       const findings = await analyzeCodeForHIPAA(code, file.path || file.name);
@@ -360,7 +401,7 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean,
       allFindings = [...allFindings, ...findings];
     } catch (error: any) {
       if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        throw new Error('Unable to fetch file content from GitHub. This may be due to CORS restrictions. Please ensure you have a valid GitHub token with "repo" scope for private repositories.');
+        throw new Error(handleCORSError());
       }
       throw error;
     }

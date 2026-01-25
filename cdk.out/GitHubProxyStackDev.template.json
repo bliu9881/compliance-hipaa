@@ -1,0 +1,570 @@
+{
+ "Resources": {
+  "GitHubProxyLambdaRole97187D46": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "Description": "Role for GitHub Proxy Lambda function",
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyLambdaRole/Resource"
+   }
+  },
+  "GitHubProxyLogGroupB99C06B3": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/aws/lambda/github-proxy-dev",
+    "RetentionInDays": 14
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyLogGroup/Resource"
+   }
+  },
+  "GitHubProxyFunction8C836C08": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-779227446268-us-east-1",
+     "S3Key": "787fc72a6a590ebe112d1465a8e8b78c240877ae8f658782daab9230776b2e8b.zip"
+    },
+    "Description": "GitHub API proxy for bypassing CORS restrictions",
+    "Environment": {
+     "Variables": {
+      "LOG_GROUP": {
+       "Ref": "GitHubProxyLogGroupB99C06B3"
+      },
+      "ENVIRONMENT": "dev"
+     }
+    },
+    "Handler": "index.handler",
+    "LoggingConfig": {
+     "LogGroup": {
+      "Ref": "GitHubProxyLogGroupB99C06B3"
+     }
+    },
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "GitHubProxyLambdaRole97187D46",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "GitHubProxyLambdaRole97187D46"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyFunction/Resource",
+    "aws:asset:path": "asset.787fc72a6a590ebe112d1465a8e8b78c240877ae8f658782daab9230776b2e8b",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "GitHubProxyAPI1CD531E6": {
+   "Type": "AWS::ApiGateway::RestApi",
+   "Properties": {
+    "Description": "GitHub API proxy endpoint",
+    "Name": "github-proxy-dev"
+   },
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyAPI/Resource"
+   }
+  },
+  "GitHubProxyAPICloudWatchRoleF7C324A1": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "apigateway.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+       ]
+      ]
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyAPI/CloudWatchRole/Resource"
+   }
+  },
+  "GitHubProxyAPIAccountDBC4B684": {
+   "Type": "AWS::ApiGateway::Account",
+   "Properties": {
+    "CloudWatchRoleArn": {
+     "Fn::GetAtt": [
+      "GitHubProxyAPICloudWatchRoleF7C324A1",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "GitHubProxyAPI1CD531E6"
+   ],
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyAPI/Account"
+   }
+  },
+  "GitHubProxyAPIDeployment4E9E1ACE0c1021cab1a0b5c52b69b835bb67f05b": {
+   "Type": "AWS::ApiGateway::Deployment",
+   "Properties": {
+    "Description": "GitHub API proxy endpoint",
+    "RestApiId": {
+     "Ref": "GitHubProxyAPI1CD531E6"
+    }
+   },
+   "DependsOn": [
+    "GitHubProxyAPIOPTIONSBC30B128",
+    "GitHubProxyAPIproxyOPTIONS59EB91EC",
+    "GitHubProxyAPIproxyPOST42F3B9D5",
+    "GitHubProxyAPIproxy79269997"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyAPI/Deployment/Resource",
+    "aws:cdk:do-not-refactor": true
+   }
+  },
+  "GitHubProxyAPIDeploymentStagedev9D3EE046": {
+   "Type": "AWS::ApiGateway::Stage",
+   "Properties": {
+    "DeploymentId": {
+     "Ref": "GitHubProxyAPIDeployment4E9E1ACE0c1021cab1a0b5c52b69b835bb67f05b"
+    },
+    "MethodSettings": [
+     {
+      "DataTraceEnabled": true,
+      "HttpMethod": "*",
+      "LoggingLevel": "INFO",
+      "ResourcePath": "/*",
+      "ThrottlingBurstLimit": 100,
+      "ThrottlingRateLimit": 50
+     }
+    ],
+    "RestApiId": {
+     "Ref": "GitHubProxyAPI1CD531E6"
+    },
+    "StageName": "dev"
+   },
+   "DependsOn": [
+    "GitHubProxyAPIAccountDBC4B684"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyAPI/DeploymentStage.dev/Resource"
+   }
+  },
+  "GitHubProxyAPIOPTIONSBC30B128": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Fn::GetAtt": [
+      "GitHubProxyAPI1CD531E6",
+      "RootResourceId"
+     ]
+    },
+    "RestApiId": {
+     "Ref": "GitHubProxyAPI1CD531E6"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyAPI/Default/OPTIONS/Resource"
+   }
+  },
+  "GitHubProxyAPIproxy79269997": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "GitHubProxyAPI1CD531E6",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "proxy",
+    "RestApiId": {
+     "Ref": "GitHubProxyAPI1CD531E6"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyAPI/Default/proxy/Resource"
+   }
+  },
+  "GitHubProxyAPIproxyOPTIONS59EB91EC": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "GitHubProxyAPIproxy79269997"
+    },
+    "RestApiId": {
+     "Ref": "GitHubProxyAPI1CD531E6"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyAPI/Default/proxy/OPTIONS/Resource"
+   }
+  },
+  "GitHubProxyAPIproxyPOSTApiPermissionGitHubProxyStackDevGitHubProxyAPI15DE638APOSTproxyF6B5500D": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "GitHubProxyFunction8C836C08",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:779227446268:",
+       {
+        "Ref": "GitHubProxyAPI1CD531E6"
+       },
+       "/",
+       {
+        "Ref": "GitHubProxyAPIDeploymentStagedev9D3EE046"
+       },
+       "/POST/proxy"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyAPI/Default/proxy/POST/ApiPermission.GitHubProxyStackDevGitHubProxyAPI15DE638A.POST..proxy"
+   }
+  },
+  "GitHubProxyAPIproxyPOSTApiPermissionTestGitHubProxyStackDevGitHubProxyAPI15DE638APOSTproxyC484A267": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "GitHubProxyFunction8C836C08",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:779227446268:",
+       {
+        "Ref": "GitHubProxyAPI1CD531E6"
+       },
+       "/test-invoke-stage/POST/proxy"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyAPI/Default/proxy/POST/ApiPermission.Test.GitHubProxyStackDevGitHubProxyAPI15DE638A.POST..proxy"
+   }
+  },
+  "GitHubProxyAPIproxyPOST42F3B9D5": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "GitHubProxyFunction8C836C08",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "MethodResponses": [
+     {
+      "ResponseModels": {
+       "application/json": "Empty"
+      },
+      "StatusCode": "200"
+     },
+     {
+      "ResponseModels": {
+       "application/json": "Empty"
+      },
+      "StatusCode": "400"
+     },
+     {
+      "ResponseModels": {
+       "application/json": "Empty"
+      },
+      "StatusCode": "500"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "GitHubProxyAPIproxy79269997"
+    },
+    "RestApiId": {
+     "Ref": "GitHubProxyAPI1CD531E6"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/GitHubProxyAPI/Default/proxy/POST/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/02QTU4DMQyFz8I+Y2CK2E9BsAGBygGqNGNCOpMfjROqKsrdcdJWdOXP78nxc3roV49wdyMP1Klx6mazg/wVpZoES9tspIW88TOKp29XaxGz1wT5zevXxadQ9QuzJ+1ulJBfklPReFfda/7ExRoi7oqg1VYSYSQYauEe1klNGNeSUMhgtIx4kEfejxSHYFqEfxyU8slF8Yxh9keLjKxedXyGbrlPwKM+LQrb8+8Yf/xYzTNd3POSxqWIFq3OG6er9ZFiSLEI50eEPd3+9g9wz/+3J2O6heMYi7A51T81R/KlXAEAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "GitHubProxyStackDev/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "GitHubProxyAPIEndpointDCC31533": {
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "GitHubProxyAPI1CD531E6"
+      },
+      ".execute-api.us-east-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "GitHubProxyAPIDeploymentStagedev9D3EE046"
+      },
+      "/"
+     ]
+    ]
+   }
+  },
+  "GitHubProxyAPIEndpoint": {
+   "Description": "GitHub Proxy API endpoint URL",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "GitHubProxyAPI1CD531E6"
+      },
+      ".execute-api.us-east-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "GitHubProxyAPIDeploymentStagedev9D3EE046"
+      },
+      "/"
+     ]
+    ]
+   },
+   "Export": {
+    "Name": "github-proxy-api-dev"
+   }
+  },
+  "GitHubProxyFunctionArn": {
+   "Description": "GitHub Proxy Lambda function ARN",
+   "Value": {
+    "Fn::GetAtt": [
+     "GitHubProxyFunction8C836C08",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "github-proxy-function-dev"
+   }
+  },
+  "GitHubProxyProxyEndpoint": {
+   "Description": "GitHub Proxy endpoint (use this in your frontend)",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "GitHubProxyAPI1CD531E6"
+      },
+      ".execute-api.us-east-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "GitHubProxyAPIDeploymentStagedev9D3EE046"
+      },
+      "/proxy"
+     ]
+    ]
+   },
+   "Export": {
+    "Name": "github-proxy-endpoint-dev"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

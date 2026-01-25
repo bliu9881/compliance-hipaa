@@ -8,13 +8,21 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest --run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:lambda": "bash scripts/build-github-proxy.sh",
+    "cdk:list": "cdk list",
+    "cdk:synth": "cdk synth",
+    "cdk:deploy": "cdk deploy --require-approval never",
+    "cdk:deploy:prod": "DEPLOY_PROD=true cdk deploy --require-approval never",
+    "cdk:destroy": "cdk destroy",
+    "deploy:lambda": "npm run build:lambda && npm run cdk:deploy",
+    "deploy:lambda:prod": "npm run build:lambda && npm run cdk:deploy:prod"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.705.0",
     "@google/genai": "^1.34.0",
     "@supabase/supabase-js": "2.45.1",
-    "lucide-react": "^0.562.0",
+    "lucide-react": "^0.563.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
   },
@@ -22,6 +30,9 @@
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/ui": "^4.0.18",
+    "aws-cdk": "^2.130.0",
+    "aws-cdk-lib": "^2.130.0",
+    "constructs": "^10.3.0",
     "fast-check": "^4.5.3",
     "jsdom": "^27.4.0",
     "typescript": "~5.8.2",
