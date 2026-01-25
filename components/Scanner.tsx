@@ -35,6 +35,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   const [pendingAction, setPendingAction] = useState<'github' | 'upload' | null>(null);
   const [scanProgress, setScanProgress] = useState<{ fileName: string; current: number; total: number; percentage: number } | null>(null);
   const [shouldStopScan, setShouldStopScan] = useState(false);
+  const [showStopConfirmation, setShowStopConfirmation] = useState(false);
 
   const handleGitHubScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,6 +142,19 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   const handleSecurityCancel = () => {
     setShowSecurityModal(false);
     setPendingAction(null);
+  };
+
+  const handleStopScanClick = () => {
+    setShowStopConfirmation(true);
+  };
+
+  const confirmStopScan = () => {
+    setShouldStopScan(true);
+    setShowStopConfirmation(false);
+  };
+
+  const cancelStopScan = () => {
+    setShowStopConfirmation(false);
   };
 
   const handleFileSelection = (files: File[]) => {
@@ -346,7 +360,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
                     />
                   </div>
                   <button
-                    onClick={() => setShouldStopScan(true)}
+                    onClick={handleStopScanClick}
                     className="w-full mt-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
                   >
                     <X className="w-4 h-4" />
@@ -500,7 +514,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
                         />
                       </div>
                       <button
-                        onClick={() => setShouldStopScan(true)}
+                        onClick={handleStopScanClick}
                         className="w-full mt-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
                       >
                         <X className="w-4 h-4" />
@@ -557,6 +571,40 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
         onClose={handleSecurityCancel}
         onAccept={handleSecurityAccept}
       />
+
+      {/* Stop Scan Confirmation Modal */}
+      {showStopConfirmation && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-red-100 text-red-600 rounded-lg">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">Stop Scan?</h3>
+            </div>
+            
+            <p className="text-slate-600 text-sm">
+              Are you sure you want to stop the current scan? Any findings analyzed so far will be discarded.
+            </p>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={cancelStopScan}
+                className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-lg font-semibold transition-all"
+              >
+                Continue Scan
+              </button>
+              <button
+                onClick={confirmStopScan}
+                className="flex-1 py-2.5 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                Stop Scan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
