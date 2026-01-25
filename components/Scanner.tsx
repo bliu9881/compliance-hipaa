@@ -33,6 +33,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<'github' | 'upload' | null>(null);
+  const [scanProgress, setScanProgress] = useState<{ fileName: string; current: number; total: number; percentage: number } | null>(null);
 
   const handleGitHubScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,12 +50,16 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   const proceedWithGitHubScan = async () => {
     setIsScanning(true);
     setScanStage('Connecting to GitHub API...');
+    setScanProgress(null);
     setError('');
     
     try {
       // Small timeout to show stages
       setTimeout(() => setScanStage('Fetching file tree and commit history...'), 800);
-      const result = await performGitHubScan(repoUrl, isIncremental);
+      const result = await performGitHubScan(repoUrl, isIncremental, (progress) => {
+        setScanStage(`Analyzing: ${progress.fileName}`);
+        setScanProgress(progress);
+      });
       
       if (result.findings.length === 0 && isIncremental) {
         setScanStage('No changes detected since last scan.');
@@ -66,6 +71,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
     } catch (err: any) {
       setError(err.message || 'Failed to scan repository. Ensure it is public and the URL is correct.');
       setIsScanning(false);
+      setScanProgress(null);
     }
   };
 
@@ -74,15 +80,20 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
 
     setIsScanning(true);
     setScanStage(`Reading ${files.length} uploaded file${files.length > 1 ? 's' : ''}...`);
+    setScanProgress(null);
     setError('');
 
     try {
-      const result = await performFileUploadScan(files);
+      const result = await performFileUploadScan(files, (progress) => {
+        setScanStage(`Analyzing: ${progress.fileName}`);
+        setScanProgress(progress);
+      });
       setScanStage('Analyzing code with AI...');
       onScanComplete(result.id);
     } catch (err) {
       setError('Failed to scan files.');
       setIsScanning(false);
+      setScanProgress(null);
     }
   };
 
@@ -297,6 +308,28 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
                   </>
                 )}
               </button>
+
+              {/* Progress Bar */}
+              {isScanning && scanProgress && (
+                <div className="mt-6 space-y-3 bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-emerald-900">Processing Files</p>
+                      <p className="text-xs text-emerald-700 mt-1 truncate">{scanProgress.fileName}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-emerald-600">{scanProgress.percentage}%</p>
+                      <p className="text-xs text-emerald-600">{scanProgress.current}/{scanProgress.total}</p>
+                    </div>
+                  </div>
+                  <div className="w-full bg-emerald-200 rounded-full h-2 overflow-hidden">
+                    <div 
+                      className="bg-emerald-600 h-full transition-all duration-300"
+                      style={{ width: `${scanProgress.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </form>
           ) : (
             <div className="space-y-6">
@@ -422,6 +455,28 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
                       </>
                     )}
                   </button>
+
+                  {/* Progress Bar */}
+                  {isScanning && scanProgress && (
+                    <div className="mt-6 space-y-3 bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-emerald-900">Processing Files</p>
+                          <p className="text-xs text-emerald-700 mt-1 truncate">{scanProgress.fileName}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-emerald-600">{scanProgress.percentage}%</p>
+                          <p className="text-xs text-emerald-600">{scanProgress.current}/{scanProgress.total}</p>
+                        </div>
+                      </div>
+                      <div className="w-full bg-emerald-200 rounded-full h-2 overflow-hidden">
+                        <div 
+                          className="bg-emerald-600 h-full transition-all duration-300"
+                          style={{ width: `${scanProgress.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

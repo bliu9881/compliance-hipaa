@@ -199,7 +199,7 @@ const getRepoFiles = async (owner: string, repo: string, path: string = '', maxF
   return allFiles;
 };
 
-export const performGitHubScan = async (repoUrl: string, isIncremental: boolean): Promise<ScanResult> => {
+export const performGitHubScan = async (repoUrl: string, isIncremental: boolean, onProgress?: (progress: { fileName: string; current: number; total: number; percentage: number }) => void): Promise<ScanResult> => {
   console.log("🚀 Starting GitHub scan for:", repoUrl);
   
   const repoInfo = parseGitHubUrl(repoUrl);
@@ -242,8 +242,21 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean)
   
   let allFindings: Finding[] = [];
 
-  for (const file of filesToScan) {
+  for (let index = 0; index < filesToScan.length; index++) {
+    const file = filesToScan[index];
     console.log("🔍 Analyzing file:", file.path || file.name);
+    
+    // Call progress callback
+    if (onProgress) {
+      const percentage = Math.round(((index + 1) / filesToScan.length) * 100);
+      onProgress({
+        fileName: file.path || file.name,
+        current: index + 1,
+        total: filesToScan.length,
+        percentage
+      });
+    }
+    
     const contentResponse = await fetch(file.download_url);
     const code = await contentResponse.text();
     console.log("📄 File content length:", code.length);
@@ -273,13 +286,26 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean)
   return result;
 };
 
-export const performFileUploadScan = async (files: File[]): Promise<ScanResult> => {
+export const performFileUploadScan = async (files: File[], onProgress?: (progress: { fileName: string; current: number; total: number; percentage: number }) => void): Promise<ScanResult> => {
   let allFindings: Finding[] = [];
   
   console.log("📁 Total files uploaded for scanning:", files.length);
   
-  for (const file of files) {
+  for (let index = 0; index < files.length; index++) {
+    const file = files[index];
     console.log("🔍 Analyzing uploaded file:", file.name);
+    
+    // Call progress callback
+    if (onProgress) {
+      const percentage = Math.round(((index + 1) / files.length) * 100);
+      onProgress({
+        fileName: file.name,
+        current: index + 1,
+        total: files.length,
+        percentage
+      });
+    }
+    
     const text = await file.text();
     const findings = await analyzeCodeForHIPAA(text, file.name);
     console.log("🎯 Findings for", file.name, ":", findings.length);
