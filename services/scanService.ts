@@ -188,12 +188,19 @@ const parseGitHubUrl = (url: string) => {
 
 const getLatestCommitSha = async (owner: string, repo: string) => {
   const headers = getGitHubAuthHeader();
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/HEAD`, { headers });
-  if (!response.ok) {
-    throw new Error(handleGitHubError(response));
+  try {
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits/HEAD`, { headers });
+    if (!response.ok) {
+      throw new Error(handleGitHubError(response));
+    }
+    const data = await response.json();
+    return data.sha;
+  } catch (error: any) {
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('Unable to connect to GitHub API. This may be due to CORS restrictions. Please ensure you have a valid GitHub token with "repo" scope for private repositories.');
+    }
+    throw error;
   }
-  const data = await response.json();
-  return data.sha;
 };
 
 const getRepoFiles = async (owner: string, repo: string, path: string = '', maxFiles: number = 50): Promise<any[]> => {
@@ -201,44 +208,51 @@ const getRepoFiles = async (owner: string, repo: string, path: string = '', maxF
   
   const headers = getGitHubAuthHeader();
   const url = `https://api.github.com/repos/${owner}/${repo}/contents${path ? `/${path}` : ''}`;
-  const response = await fetch(url, { headers });
-  if (!response.ok) {
-    throw new Error(handleGitHubError(response));
-  }
-  const contents = await response.json();
-  
-  let allFiles: any[] = [];
-  
-  for (const item of contents) {
-    if (allFiles.length >= maxFiles) {
-      console.log(`⚠️ Reached maximum file limit (${maxFiles}), stopping scan`);
-      break;
+  try {
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      throw new Error(handleGitHubError(response));
+    }
+    const contents = await response.json();
+    
+    let allFiles: any[] = [];
+    
+    for (const item of contents) {
+      if (allFiles.length >= maxFiles) {
+        console.log(`⚠️ Reached maximum file limit (${maxFiles}), stopping scan`);
+        break;
+      }
+      
+      if (item.type === 'file') {
+        // Check if it's a code file we want to scan
+        if (/\.(js|ts|tsx|jsx|py|go|java|php|rb|sql|c|cpp|cs|swift|kt|scala|rs)$/i.test(item.name)) {
+          console.log(`📄 Found code file: ${item.path}`);
+          allFiles.push(item);
+        }
+      } else if (item.type === 'dir') {
+        // Skip common directories that don't contain source code
+        const skipDirs = ['node_modules', '.git', 'dist', 'build', 'target', 'bin', 'obj', '.next', 'coverage', '__pycache__'];
+        if (!skipDirs.includes(item.name)) {
+          console.log(`📁 Recursively scanning subdirectory: ${item.path}`);
+          try {
+            const subFiles = await getRepoFiles(owner, repo, item.path, maxFiles - allFiles.length);
+            allFiles = [...allFiles, ...subFiles];
+          } catch (error) {
+            console.warn(`⚠️ Failed to scan subdirectory ${item.path}:`, error);
+          }
+        } else {
+          console.log(`⏭️ Skipping directory: ${item.path}`);
+        }
+      }
     }
     
-    if (item.type === 'file') {
-      // Check if it's a code file we want to scan
-      if (/\.(js|ts|tsx|jsx|py|go|java|php|rb|sql|c|cpp|cs|swift|kt|scala|rs)$/i.test(item.name)) {
-        console.log(`📄 Found code file: ${item.path}`);
-        allFiles.push(item);
-      }
-    } else if (item.type === 'dir') {
-      // Skip common directories that don't contain source code
-      const skipDirs = ['node_modules', '.git', 'dist', 'build', 'target', 'bin', 'obj', '.next', 'coverage', '__pycache__'];
-      if (!skipDirs.includes(item.name)) {
-        console.log(`📁 Recursively scanning subdirectory: ${item.path}`);
-        try {
-          const subFiles = await getRepoFiles(owner, repo, item.path, maxFiles - allFiles.length);
-          allFiles = [...allFiles, ...subFiles];
-        } catch (error) {
-          console.warn(`⚠️ Failed to scan subdirectory ${item.path}:`, error);
-        }
-      } else {
-        console.log(`⏭️ Skipping directory: ${item.path}`);
-      }
+    return allFiles;
+  } catch (error: any) {
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('Unable to connect to GitHub API. This may be due to CORS restrictions. Please ensure you have a valid GitHub token with "repo" scope for private repositories.');
     }
+    throw error;
   }
-  
-  return allFiles;
 };
 
 // Global abort controller for stopping scans
@@ -327,17 +341,24 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean,
     }
     
     const headers = getGitHubAuthHeader();
-    const contentResponse = await fetch(file.download_url, { headers });
-    if (!contentResponse.ok) {
-      throw new Error(handleGitHubError(contentResponse));
+    try {
+      const contentResponse = await fetch(file.download_url, { headers });
+      if (!contentResponse.ok) {
+        throw new Error(handleGitHubError(contentResponse));
+      }
+      const code = await contentResponse.text();
+      console.log("📄 File content length:", code.length);
+      
+      const findings = await analyzeCodeForHIPAA(code, file.path || file.name);
+      console.log("🎯 Findings for", file.path || file.name, ":", findings.length);
+      
+      allFindings = [...allFindings, ...findings];
+    } catch (error: any) {
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        throw new Error('Unable to fetch file content from GitHub. This may be due to CORS restrictions. Please ensure you have a valid GitHub token with "repo" scope for private repositories.');
+      }
+      throw error;
     }
-    const code = await contentResponse.text();
-    console.log("📄 File content length:", code.length);
-    
-    const findings = await analyzeCodeForHIPAA(code, file.path || file.name);
-    console.log("🎯 Findings for", file.path || file.name, ":", findings.length);
-    
-    allFindings = [...allFindings, ...findings];
   }
 
   console.log("📊 Total findings across all files:", allFindings.length);
