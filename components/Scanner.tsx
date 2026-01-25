@@ -329,7 +329,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-2">GitHub Personal Access Token (Optional)</label>
+                <label className="block text-sm font-bold text-slate-700 mb-2">GitHub Personal Access Token (Required for private repos)</label>
                 <div className="relative">
                   <input 
                     type="password" 
