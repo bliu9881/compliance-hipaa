@@ -34,6 +34,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<'github' | 'upload' | null>(null);
   const [scanProgress, setScanProgress] = useState<{ fileName: string; current: number; total: number; percentage: number } | null>(null);
+  const [shouldStopScan, setShouldStopScan] = useState(false);
 
   const handleGitHubScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,12 +52,16 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
     setIsScanning(true);
     setScanStage('Connecting to GitHub API...');
     setScanProgress(null);
+    setShouldStopScan(false);
     setError('');
     
     try {
       // Small timeout to show stages
       setTimeout(() => setScanStage('Fetching file tree and commit history...'), 800);
       const result = await performGitHubScan(repoUrl, isIncremental, (progress) => {
+        if (shouldStopScan) {
+          throw new Error('Scan cancelled by user');
+        }
         setScanStage(`Analyzing: ${progress.fileName}`);
         setScanProgress(progress);
       });
@@ -69,7 +74,11 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
         onScanComplete(result.id);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to scan repository. Ensure it is public and the URL is correct.');
+      if (err.message === 'Scan cancelled by user') {
+        setError('Scan cancelled by user.');
+      } else {
+        setError(err.message || 'Failed to scan repository. Ensure it is public and the URL is correct.');
+      }
       setIsScanning(false);
       setScanProgress(null);
     }
@@ -81,17 +90,25 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
     setIsScanning(true);
     setScanStage(`Reading ${files.length} uploaded file${files.length > 1 ? 's' : ''}...`);
     setScanProgress(null);
+    setShouldStopScan(false);
     setError('');
 
     try {
       const result = await performFileUploadScan(files, (progress) => {
+        if (shouldStopScan) {
+          throw new Error('Scan cancelled by user');
+        }
         setScanStage(`Analyzing: ${progress.fileName}`);
         setScanProgress(progress);
       });
       setScanStage('Analyzing code with AI...');
       onScanComplete(result.id);
-    } catch (err) {
-      setError('Failed to scan files.');
+    } catch (err: any) {
+      if (err.message === 'Scan cancelled by user') {
+        setError('Scan cancelled by user.');
+      } else {
+        setError('Failed to scan files.');
+      }
       setIsScanning(false);
       setScanProgress(null);
     }
@@ -328,6 +345,13 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
                       style={{ width: `${scanProgress.percentage}%` }}
                     />
                   </div>
+                  <button
+                    onClick={() => setShouldStopScan(true)}
+                    className="w-full mt-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    Stop Scan
+                  </button>
                 </div>
               )}
             </form>
@@ -475,6 +499,13 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
                           style={{ width: `${scanProgress.percentage}%` }}
                         />
                       </div>
+                      <button
+                        onClick={() => setShouldStopScan(true)}
+                        className="w-full mt-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        Stop Scan
+                      </button>
                     </div>
                   )}
                 </div>
