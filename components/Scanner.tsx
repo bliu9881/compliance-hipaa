@@ -360,6 +360,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
                     />
                   </div>
                   <button
+                    type="button"
                     onClick={handleStopScanClick}
                     className="w-full mt-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
                   >
@@ -514,6 +515,7 @@ export const Scanner: React.FC<ScannerProps> = ({ onScanComplete }) => {
                         />
                       </div>
                       <button
+                        type="button"
                         onClick={handleStopScanClick}
                         className="w-full mt-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
                       >
