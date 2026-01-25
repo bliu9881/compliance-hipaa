@@ -342,11 +342,16 @@ export const performGitHubScan = async (repoUrl: string, isIncremental: boolean,
     
     const headers = getGitHubAuthHeader();
     try {
-      const contentResponse = await fetch(file.download_url, { headers });
+      // Use GitHub API endpoint instead of raw.githubusercontent.com for better CORS support
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${file.path}`;
+      const contentResponse = await fetch(apiUrl, { headers });
       if (!contentResponse.ok) {
         throw new Error(handleGitHubError(contentResponse));
       }
-      const code = await contentResponse.text();
+      const data = await contentResponse.json();
+      
+      // Decode base64 content from API response
+      const code = atob(data.content);
       console.log("📄 File content length:", code.length);
       
       const findings = await analyzeCodeForHIPAA(code, file.path || file.name);
